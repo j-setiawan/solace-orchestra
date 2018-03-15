@@ -1,0 +1,4 @@
+url=<MQTT URL>
+port=<MQTT PORT>
+username=<Username>
+password=<Password>

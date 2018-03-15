@@ -1,4 +1,7 @@
+import sys
 import mido
+
+from solace.client import SolaceMQTTClient
 
 notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 
@@ -19,6 +22,9 @@ for track_id in range(len(mid.tracks)):
             'notes': len(notes_in_track)
         }
 
+solace = SolaceMQTTClient()
+
 for msg in mid.play():
     if msg.type == "note_on":
         print(str(msg.channel) + ": " + notes[msg.note % 12])
+        solace.publish("orchestra/" + msg.channel, notes[msg.note % 12])
