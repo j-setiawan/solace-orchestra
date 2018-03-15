@@ -3,6 +3,7 @@ import mido
 
 from solace.client import SolaceMQTTClient
 
+# The conversion of MIDI notes is based on this: https://www.midikits.net/midi_analyser/midi_note_numbers_for_octaves.htm
 notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 
 midi_file = sys.argv[1]
@@ -27,4 +28,4 @@ solace = SolaceMQTTClient()
 for msg in mid.play():
     if msg.type == "note_on":
         print(str(msg.channel) + ": " + notes[msg.note % 12])
-        solace.publish("orchestra/" + msg.channel, notes[msg.note % 12])
+        solace.publish("orchestra/" + str(msg.channel), notes[msg.note % 12])
