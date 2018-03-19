@@ -1,0 +1,344 @@
+@keyframes slide-anim1 {
+  0% { margin-left: 10px;}
+  92% { background-color: #0074d9;
+    margin-left: 267px;}
+  93% {
+    background-color: #ffffff;
+    margin-left: 270px;
+  }
+  100% {
+    background-color: #ffffff;
+    margin-left: 300px;
+  }
+}
+
+@keyframes slide-anim2 {
+  0% {
+    margin-left: 10px;
+  }
+  92% {
+    background-color: #d83439;
+    margin-left: 267px;
+  }
+  93% {
+    background-color: #ffffff;
+    margin-left: 270px;
+  }
+  100% {
+    background-color: #ffffff;
+    margin-left: 300px;
+  }
+}
+
+@keyframes slide-anim3 {
+  0% {
+    margin-left: 10px;
+  }
+  92% {
+    background-color: #38b439;
+    margin-left: 267px;
+  }
+  93% {
+    background-color: #ffffff;
+    margin-left: 270px;
+  }
+  100% {
+    background-color: #ffffff;
+    margin-left: 300px;
+  }
+}
+
+@keyframes slide-anim4 {
+  0% {
+    margin-left: 10px;
+  }
+  92% {
+    background-color: #e9cd54;
+    margin-left: 267px;
+  }
+  93% {
+    background-color: #ffffff;
+    margin-left: 270px;
+  }
+  100% {
+    background-color: #ffffff;
+    margin-left: 300px;
+  }
+}
+
+@keyframes slide-anim5 {
+  0% {
+    margin-left: 10px;
+  }
+  92% {
+    background-color: #811ed1;
+    margin-left: 267px;
+  }
+  93% {
+    background-color: #ffffff;
+    margin-left: 270px;
+  }
+  100% {
+    background-color: #ffffff;
+    margin-left: 300px;
+  }
+}
+
+@keyframes slide-anim6 {
+  0% {
+    margin-left: 10px;
+  }
+  92% {
+    background-color: #e66224;
+    margin-left: 267px;
+  }
+  93% {
+    background-color: #ffffff;
+    margin-left: 270px;
+  }
+  100% {
+    background-color: #ffffff;
+    margin-left: 300px;
+  }
+}
+
+@keyframes slide-anim7 {
+  0% {
+    margin-left: 10px;
+  }
+  92% {
+    background-color: #e041ab;
+    margin-left: 267px;
+  }
+  93% {
+    background-color: #ffffff;
+    margin-left: 270px;
+  }
+  100% {
+    background-color: #ffffff;
+    margin-left: 300px;
+  }
+}
+
+.slider {
+  height: 20px;
+  width: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  display: inline-block;
+  box-shadow: 10px -5px #091a35;
+}
+
+.slider-anim-1 {
+  animation-name: slide-anim1;
+  animation-duration: 1.5s;
+  animation-iteration-count: 1;
+  animation-timing-function: linear;
+}
+
+.slider-anim-2 {
+  animation-name: slide-anim2;
+  animation-duration: 1.5s;
+  animation-iteration-count: 1;
+  animation-timing-function: linear;
+}
+
+.slider-anim-3 {
+  animation-name: slide-anim3;
+  animation-duration: 1.5s;
+  animation-iteration-count: 1;
+  animation-timing-function: linear;
+}
+
+.slider-anim-4 {
+  animation-name: slide-anim4;
+  animation-duration: 1.5s;
+  animation-iteration-count: 1;
+  animation-timing-function: linear;
+}
+
+.slider-anim-5 {
+  animation-name: slide-anim5;
+  animation-duration: 1.5s;
+  animation-iteration-count: 1;
+  animation-timing-function: linear;
+}
+
+.slider-anim-6 {
+  animation-name: slide-anim6;
+  animation-duration: 1.5s;
+  animation-iteration-count: 1;
+  animation-timing-function: linear;
+}
+
+.slider-anim-7 {
+  animation-name: slide-anim7;
+  animation-duration: 1.5s;
+  animation-iteration-count: 1;
+  animation-timing-function: linear;
+}
+
+.color1 {
+  background-color: #0074d9;
+}
+
+.color2 {
+  background-color: #d83439;
+}
+
+.color3 {
+  background-color: #38b439;
+}
+
+.color4 {
+  background-color: #e9cd54;
+}
+
+.color5 {
+  background-color: #811ed1;
+}
+
+.color6 {
+  background-color: #e66224;
+}
+
+.color7 {
+  background-color: #e041ab;
+}
+
+.shape {
+  margin-bottom: 30px;
+}
+
+body,
+html {
+  height: 100%;
+}
+
+body {
+  background-color: #001f3f;
+  justify-content: left;
+  align-items: center;
+}
+
+.track1 {
+  position: absolute;
+  top: 233px;
+}
+
+.track2 {
+  position: absolute;
+  top: 193px;
+}
+
+.track3 {
+  position: absolute;
+  top: 153px;
+}
+
+.track4 {
+  position: absolute;
+  top: 113px;
+}
+
+.track5 {
+  position: absolute;
+  top: 73px;
+}
+
+.track6 {
+  position: absolute;
+  top: 33px;
+}
+
+.track7 {
+  position: absolute;
+  top: -7px;
+}
+
+.line {
+  position: absolute;
+  left: 10px;
+  width: 300px;
+  height: 0px;
+  border: 2px solid #999999;
+  z-index: -1;
+  box-shadow: 10px -5px #091a35;
+}
+
+.line7 {
+  top: 0px;
+}
+
+.line6 {
+  top: 40px;
+}
+
+.line5 {
+  top: 80px;
+}
+
+.line4 {
+  top: 120px;
+}
+
+.line3 {
+  top: 160px;
+}
+
+.line2 {
+  top: 200px;
+}
+
+.line1 {
+  top: 240px;
+}
+
+.outermost {
+  left: 180px;
+  transform-style: preserve-3d;
+  position: absolute;
+  perspective: 450px;
+  height: 300px;
+  width: 395px;
+}
+
+.outer1 {
+  transform-style: preserve-3d;
+  transform: translateX(100px) translateY(-100px) rotateZ(90deg) rotateY(-60deg);
+  transform-origin: 20% 50%;
+  height: 280px;
+}
+
+.my-button {
+  position: absolute;
+  top: 200px;
+  width: 40px;
+  height: 40px;
+  border-radius: 5px;
+  box-shadow: 5px 10px #091a35;
+}
+
+.button1 {
+  left: -50px;
+}
+.button2 {
+  left: 25px;
+}
+.button3 {
+  left: 100px;
+}
+.button4 {
+  left: 175px;
+}
+.button5 {
+  left: 250px;
+}
+.button6 {
+  left: 325px;
+}
+
+.button7 {
+  left: 400px;
+}
+
