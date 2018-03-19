@@ -126,7 +126,7 @@
   border-radius: 10px;
   margin-bottom: 20px;
   display: inline-block;
-  box-shadow: 10px -5px #091a35;
+  box-shadow: 10px -5px #0e254b;
 }
 
 .slider-anim-1 {
@@ -210,17 +210,6 @@
   margin-bottom: 30px;
 }
 
-body,
-html {
-  height: 100%;
-}
-
-body {
-  background-color: #001f3f;
-  justify-content: left;
-  align-items: center;
-}
-
 .track1 {
   position: absolute;
   top: 233px;
@@ -263,7 +252,7 @@ body {
   height: 0px;
   border: 2px solid #999999;
   z-index: -1;
-  box-shadow: 10px -5px #091a35;
+  box-shadow: 10px -5px #0e254b;
 }
 
 .line7 {
@@ -294,8 +283,19 @@ body {
   top: 240px;
 }
 
+body,
+html {
+  height: 100%;
+}
+
+body {
+  background-color: #08325c;
+  justify-content: left;
+  align-items: center;
+}
+
 .outermost {
-  left: 180px;
+  left: 80px;
   transform-style: preserve-3d;
   position: absolute;
   perspective: 450px;
@@ -316,7 +316,9 @@ body {
   width: 40px;
   height: 40px;
   border-radius: 5px;
-  box-shadow: 5px 10px #091a35;
+  box-shadow: 5px 10px #0e254b;
+  border-color: rgb(95, 102, 102);
+  border-width: thin;
 }
 
 .button1 {
@@ -337,7 +339,6 @@ body {
 .button6 {
   left: 325px;
 }
-
 .button7 {
   left: 400px;
 }
