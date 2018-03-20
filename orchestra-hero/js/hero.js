@@ -4,18 +4,18 @@ function setup() {
 
 function mainLoop() {
   addTimedSlider(1, 0);
-  addTimedSlider(2, 200);
-  addTimedSlider(3, 400);
-  addTimedSlider(4, 600);
-  addTimedSlider(5, 800);
-  addTimedSlider(6, 1000);
-  addTimedSlider(7, 1200);
-  addTimedSlider(6, 1400);
+  addTimedSlider(2, 400);
+  addTimedSlider(3, 800);
+  addTimedSlider(4, 1200);
   addTimedSlider(5, 1600);
-  addTimedSlider(4, 1800);
-  addTimedSlider(3, 2000);
-  addTimedSlider(2, 2200);
-  addTimedSlider(1, 2400);
+  addTimedSlider(6, 2000);
+  addTimedSlider(7, 2400);
+  addTimedSlider(6, 2800);
+  addTimedSlider(5, 3200);
+  addTimedSlider(4, 3600);
+  addTimedSlider(3, 4000);
+  addTimedSlider(2, 4400);
+  addTimedSlider(1, 4800);
 }
 
 function addTimedSlider(track, timeout) {

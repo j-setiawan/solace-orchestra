@@ -286,6 +286,8 @@
 body,
 html {
   height: 100%;
+  font-family: 'Roboto', sans-serif;
+  font-size: 24px;
 }
 
 body {
@@ -295,19 +297,24 @@ body {
 }
 
 .outermost {
-  left: 80px;
+  left: 120px;
   transform-style: preserve-3d;
   position: absolute;
-  perspective: 450px;
+  perspective: 500px;
   height: 300px;
-  width: 395px;
+  width: 315px;
 }
 
 .outer1 {
   transform-style: preserve-3d;
-  transform: translateX(100px) translateY(-100px) rotateZ(90deg) rotateY(-60deg);
-  transform-origin: 20% 50%;
+  transform: translateX(100px) translateY(-100px) rotateZ(90deg) rotateY(-63deg);
+  transform-origin: 12% 50%;
   height: 280px;
+}
+
+div#buttons {
+  height: 50px;
+  transform: translateY(-285px);
 }
 
 .my-button {
@@ -318,28 +325,43 @@ body {
   border-radius: 5px;
   box-shadow: 5px 10px #0e254b;
   border-color: rgb(95, 102, 102);
-  border-width: thin;
+  border-width: 2px;
+  outline: none;
+}
+
+.my-button:hover {
+  transform: translateX(-1px) translateY(-1px);
+}
+
+.my-button:active {
+  transform: translateX(1px) translateY(1px);
+  outline: none;
 }
 
 .button1 {
-  left: -50px;
+  left: -103px;
 }
 .button2 {
-  left: 25px;
+  left: -25px;
 }
 .button3 {
-  left: 100px;
+  left: 54px;
 }
 .button4 {
-  left: 175px;
+  left: 133px;
 }
 .button5 {
-  left: 250px;
+  left: 212px;
 }
 .button6 {
-  left: 325px;
+  left: 292px;
 }
 .button7 {
-  left: 400px;
+  left: 371px;
 }
 
+.heading {
+  color: #CCCCCC;
+  position: absolute;
+  left: 185px;
+}
