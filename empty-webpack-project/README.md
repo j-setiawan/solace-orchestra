@@ -16,6 +16,13 @@ or
 
 to build dev or production builds, respectively.
 
+If you want webpack to continually watch your code and rebuild when it changes,
+use:
+   
+    npm run watch
+    
+This will build the dev version when a file changes.
+
 Your output should be fully included in dist.
 
 
