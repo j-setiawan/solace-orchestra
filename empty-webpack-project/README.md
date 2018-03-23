@@ -8,11 +8,11 @@ assets that have been imported.
 
 To build the output, you need to be at empty-webpack-project and type: 
 
-    `npm run build:dev`
+    npm run build:dev
    
 or
 
-    `npm run build:prod`
+    npm run build:prod
 
 to build dev or production builds, respectively.
 
