@@ -51,6 +51,7 @@ The application is split into the following components:
    converting this information into sound and graphics that can be shown
    on a projector for the demo and played over the audio system in the room.
    
+5. Game Controller
 
 ### Message Broker
 
