@@ -67,12 +67,12 @@ ensure that the cloud service provides sufficient message throughput and low
 enough latency for the application. If lower latency is needed, it may be necessary
 to use a local appliance instead.
 
-###### Message Broker Config
+##### Message Broker Config
 
 The configuration of the Message Broker is quite straightforward. The default startup
 configuration should be sufficient for this application.
 
-###### Message Exchange Patterns
+##### Message Exchange Patterns
 
 All messages sent via the message broker will use SMF direct messaging (or QOS0 for
 MQTT). There are no requirements for guaranteed messaging.
@@ -103,7 +103,7 @@ the request to play a song, it will:
  * then it will send the song out on all channels
  * when the song ends, it will send a song complete message
 
-#### Dashboard
+### Dashboard
      
 The Dashboard is the brains of the application. It is responsible for:
 
@@ -117,7 +117,7 @@ players to be ranked. This ranking could be used in channel assignment for later
 so that better players are assigned harder channels.
     
 
-#### Game Controller
+### Game Controller
 
 There are many Game Controllers in the application. The Game Controllers are used
 by Players to participate in the song. At startup they:
@@ -140,7 +140,7 @@ When a song is started the Game Controller will:
 When the song is complete (recognized by the reception of a Song Complete message from the Conductor), the Game Controller will display the full score for the player and send the score to the Dashboard.
 
 
-#### Audience
+### Audience
 
 The Audience is the audio and visual component of the application. It is responsible for combining
 all the information from the Conductor and Game Controllers into sound and some sort of visual display.
