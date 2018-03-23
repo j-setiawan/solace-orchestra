@@ -3,3 +3,4 @@
 .DS_Store
 __pycache__
 conductor/ui/lib
+empty-webpack-project/node_modules
