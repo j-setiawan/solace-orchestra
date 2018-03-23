@@ -9,8 +9,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      title:    'Drumming on a Cloud',
-      template: './src/index.html'
+      title:    'Your project name',
     })
   ],
   devtool: 'inline-source-map',
