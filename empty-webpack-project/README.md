@@ -26,6 +26,9 @@ to use that lets you write HTML using javascript directly (see src/templates.js)
 you can simply do things like:
 
 ```
+   // remove need to prefix everything with jst.
+   jst.makeGlobal(); 
+   
    jst("body").appendChild(
      $div({cn: "my-class-name", otherParam: "my-random-param"},
        $ul(
