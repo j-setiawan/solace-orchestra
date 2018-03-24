@@ -4,3 +4,4 @@
 __pycache__
 conductor/ui/lib
 node_modules/
+empty-webpack-project/node_modules
