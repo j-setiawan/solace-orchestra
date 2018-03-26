@@ -45,9 +45,9 @@ class JstElement {
   replaceChild() {
 
     if (this.el) {
-      for (var i = this.el.attributes.length - 1; i >= 0; i--){
-        this.el.removeAttribute(this.el.attributes[i].name);
-      }
+      //for (var i = this.el.attributes.length - 1; i >= 0; i--){
+        //this.el.removeAttribute(this.el.attributes[i].name);
+      //}
       this.el.innerHTML = "";
     }
 
@@ -156,6 +156,10 @@ class JstElement {
   }
 
   _processParams(params) {
+    console.log("Before:", params);
+    params = jst._flatten.apply(this, params);
+    console.log("After:", params);
+
     if (typeof params === "undefined") {
       params = [];
     }
