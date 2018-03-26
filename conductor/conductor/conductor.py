@@ -39,7 +39,7 @@ def play_song(mid):
             #  note: The midi note number
             #  channel: The midi channel that denotes the instrument
             message_body = '{ ' + \
-            'track: ' + str(unique_notes.index(msg.note) + 1) + ',' +\
+            'track: ' + str((unique_notes.index(msg.note) % number_of_tracks_on_game_controller) + 1) + ',' +\
             'note: ' + str(msg.note) + ',' + \
             'channel: ' + str(channel_number) + '}'
             print(message_body)
@@ -52,6 +52,8 @@ def play_song(mid):
 # channel - the "instument being played"
 theatre = 'default'
 
+# Total number of tracks playable on game controller
+number_of_tracks_on_game_controller = 7
 # The conversion of MIDI notes is based on this: 
 # https://www.midikits.net/midi_analyser/midi_note_numbers_for_octaves.htm
 notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
@@ -61,9 +63,11 @@ mid = mido.MidiFile(midi_file)
 
 channels = {}
 
-
+# Create the messaging client
 solace = SolaceMQTTClient()
 
+# Analyze the song
 analyze_song(mid)
+# Play the song note by note and send out messages to game controllers
 play_song(mid)
     
