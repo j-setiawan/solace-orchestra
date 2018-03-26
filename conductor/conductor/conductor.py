@@ -1,6 +1,7 @@
 # Conductor
 import sys
 import mido
+import time
 
 from solace.client import SolaceMQTTClient
 
@@ -31,6 +32,7 @@ def play_song(mid):
     for msg in mid.play():
         if msg.type == "note_on":
             channel_number = msg.channel
+            topic = "orchestra/" + theatre + '/' + str(channel_number)
             unique_notes = channels[channel_number]['unique']
             print(str(msg.channel) + ": " + notes[msg.note % 12])
 
@@ -38,13 +40,14 @@ def play_song(mid):
             #  track: The track on the game controller that the note will be placed on (1..7)
             #  note: The midi note number
             #  channel: The midi channel that denotes the instrument
+            #  time: Epoch time in seconds UTC
             message_body = '{ ' + \
-            'track: ' + str((unique_notes.index(msg.note) % number_of_tracks_on_game_controller) + 1) + ',' +\
-            'note: ' + str(msg.note) + ',' + \
-            'channel: ' + str(channel_number) + '}'
-            print(message_body)
-            solace.publish("orchestra/" + theatre + '/' + str(msg.channel), 
-            message_body)
+            '"track": "' + str((unique_notes.index(msg.note) % number_of_tracks_on_game_controller) + 1) + '" ,' +\
+            '"note": "' + str(msg.note) + '" ,' + \
+            '"channel": "' + str(channel_number) + '" ,' + \
+            '"time": "' + str(time.time()) + '"}'
+            print(topic + message_body)
+            solace.publish(topic, message_body)
 
 # Topic format = orchestra/theatre/channel
 # orchestra - constant
