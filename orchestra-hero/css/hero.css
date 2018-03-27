@@ -363,5 +363,6 @@ div#buttons {
 .heading {
   color: #CCCCCC;
   position: absolute;
-  left: 185px;
+  left: 165px;
+  top: -5px;
 }
