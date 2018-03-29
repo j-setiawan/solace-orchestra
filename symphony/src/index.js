@@ -1,18 +1,9 @@
-let factoryProps = new solace.SolclientFactoryProperties();
-factoryProps.profile = solace.SolclientFactoryProfiles.version10;
-solace.SolclientFactory.init(factoryProps);
+import env from '../environment/env'
+import mqtt from'mqtt';
 
-hosturl="<HOST>";
-vpn="<VPN>";
-username="<USER>";
-pass="<PASS>";
-
-// create session
-session = solace.SolclientFactory.createSession({
-    url:      hosturl,
-    vpnName:  vpn,
-    userName: username,
-    password: pass
+const client  = mqtt.connect(env.broker.url, {
+    username: env.broker.username,
+    password: env.broker.password
 });
 
 const context = new AudioContext();
@@ -190,9 +181,8 @@ function playSound(note, type) {
     )
 }
 
-session.on(solace.SessionEventCode.MESSAGE, function (message) {
-    let topic = message.getDestination().getName().split('/');
-    let contents = JSON.parse(message.getBinaryAttachment());
+client.on('message', function (topic, message) {
+    let contents = JSON.parse(message.toString());
 
     let channel = contents.channel;
     let note = contents.note;
@@ -208,23 +198,7 @@ session.on(solace.SessionEventCode.MESSAGE, function (message) {
     console.log(channel + " " + note);
 });
 
-session.on(solace.SessionEventCode.UP_NOTICE, function (sessionEvent) {
+client.on('connect', function () {
     console.log('Connected');
-
-    session.subscribe(
-        solace.SolclientFactory.createTopicDestination("orchestra/default/*"),
-        true, // generate confirmation when subscription is added successfully
-        "orchestra/default/*", // use topic name as correlation key
-        10000 // 10 seconds timeout for this operation
-    );
+    client.subscribe("orchestra/default/+");
 });
-
-session.on(solace.SessionEventCode.SUBSCRIPTION_OK, function (sessionEvent) {
-    console.log('Subscribed');
-});
-
-try {
-    session.connect();
-} catch (error) {
-    console.log(error.toString());
-}

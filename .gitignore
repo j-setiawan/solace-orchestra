@@ -9,3 +9,5 @@ empty-webpack-project/node_modules
 env/
 .vscode/
 *.pyc
+npm-debug.log
+**/dist
