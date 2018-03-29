@@ -1,3 +1,20 @@
+let factoryProps = new solace.SolclientFactoryProperties();
+factoryProps.profile = solace.SolclientFactoryProfiles.version10;
+solace.SolclientFactory.init(factoryProps);
+
+hosturl="<HOST>";
+vpn="<VPN>";
+username="<USER>";
+pass="<PASS>";
+
+// create session
+session = solace.SolclientFactory.createSession({
+    url:      hosturl,
+    vpnName:  vpn,
+    userName: username,
+    password: pass
+});
+
 const context = new AudioContext();
 
 const oscillatorTypes = ['sine', 'sawtooth', 'square', 'triangle'];
@@ -140,6 +157,7 @@ const noteValues = {
     'B7': 3951.07,
     'C8': 4186.01
 };
+const noteTranslator = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
 let buttonsDiv = document.getElementById("buttons");
 
@@ -170,4 +188,43 @@ function playSound(note, type) {
     g.gain.exponentialRampToValueAtTime(
         0.00001, context.currentTime + 1
     )
+}
+
+session.on(solace.SessionEventCode.MESSAGE, function (message) {
+    let topic = message.getDestination().getName().split('/');
+    let contents = JSON.parse(message.getBinaryAttachment());
+
+    let channel = contents.channel;
+    let note = contents.note;
+
+    // MIDI can go up 10 octaves, whereas we only support up to 8
+    let pitch = Math.min(Math.floor(note/12) - 1, 8);
+
+    let letter = noteTranslator[note % 12] + pitch;
+    let type = oscillatorTypes[channel % oscillatorTypes.length];
+
+    playSound(letter, type);
+
+    console.log(channel + " " + note);
+});
+
+session.on(solace.SessionEventCode.UP_NOTICE, function (sessionEvent) {
+    console.log('Connected');
+
+    session.subscribe(
+        solace.SolclientFactory.createTopicDestination("orchestra/default/*"),
+        true, // generate confirmation when subscription is added successfully
+        "orchestra/default/*", // use topic name as correlation key
+        10000 // 10 seconds timeout for this operation
+    );
+});
+
+session.on(solace.SessionEventCode.SUBSCRIPTION_OK, function (sessionEvent) {
+    console.log('Subscribed');
+});
+
+try {
+    session.connect();
+} catch (error) {
+    console.log(error.toString());
 }
