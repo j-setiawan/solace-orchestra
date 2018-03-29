@@ -5,6 +5,8 @@ import time
 
 from solace.client import SolaceMQTTClient
 
+channel_instrument = []
+
 def get_unique_notes_in_channel(notes_in_channel):
     """ Get an orderede set of unique notes in the channel """
     all_notes = []
@@ -17,7 +19,8 @@ def analyze_song(mid):
     """ Determine which tracks have enough notes to make it interesting """
     for channel_id in range(len(mid.tracks)):
         channel = mid.tracks[channel_id]
-        notes_in_channel = [n for n in channel if n.type == "note_on"]
+
+        notes_in_channel = [n for n in channel if n.type == 'note_on']
 
         if notes_in_channel:
             channel_number = notes_in_channel[0].channel
@@ -27,6 +30,13 @@ def analyze_song(mid):
             }
             unique_notes = get_unique_notes_in_channel(notes_in_channel)
             channels[channel_number]['unique'] = unique_notes
+
+            program_change = next((m for m in channel if m.type == 'program_change'), None)
+
+            if program_change:
+                channel_instrument.insert(channel_number, program_change.program)
+            else:
+                channel_instrument.insert(channel_number, 0)
 
 def play_song(mid):
     for msg in mid.play():
@@ -42,6 +52,7 @@ def play_song(mid):
             #  channel: The midi channel that denotes the instrument
             #  time: Epoch time in seconds UTC
             message_body = '{ ' + \
+            '"program": ' + str(channel_instrument[channel_number]) + ',' +\
             '"track": "' + str((unique_notes.index(msg.note) % number_of_tracks_on_game_controller) + 1) + '" ,' +\
             '"note": "' + str(msg.note) + '" ,' + \
             '"channel": "' + str(channel_number) + '" ,' + \

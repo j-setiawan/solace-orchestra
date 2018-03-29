@@ -23,6 +23,7 @@
   "homepage": "",
   "dependencies": {
     "mqtt": "^2.17.0",
+    "webaudio-instruments": "^0.4.1",
     "webpack": "^4.1.1",
     "webpack-cli": "^2.0.11"
   },
