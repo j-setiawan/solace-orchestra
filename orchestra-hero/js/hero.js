@@ -51,19 +51,24 @@ function setup() {
 
 function mainLoop() {
   initializeMessaging(addTimedSlider);
-  // addTimedSlider(1, 0);
-  // addTimedSlider(2, 400);
-  // addTimedSlider(3, 800);
-  // addTimedSlider(4, 1200);
-  // addTimedSlider(5, 1600);
-  // addTimedSlider(6, 2000);
-  // addTimedSlider(7, 2400);
-  // addTimedSlider(6, 2800);
-  // addTimedSlider(5, 3200);
-  // addTimedSlider(4, 3600);
-  // addTimedSlider(3, 4000);
-  // addTimedSlider(2, 4400);
-  // addTimedSlider(1, 4800);
+  addTimedSlider(1, 0);
+  addTimedSlider(3, 200);
+  addTimedSlider(2, 400);
+  addTimedSlider(4, 600);
+  addTimedSlider(3, 800);
+  addTimedSlider(5, 1000);
+  addTimedSlider(4, 1200);
+  addTimedSlider(6, 1400);
+  addTimedSlider(5, 1600);
+  addTimedSlider(7, 1800);
+  addTimedSlider(6, 2000);
+  addTimedSlider(4, 2200);
+  addTimedSlider(5, 2400);
+  addTimedSlider(3, 2600);
+  addTimedSlider(4, 2800);
+  addTimedSlider(2, 3000);
+  addTimedSlider(3, 3200);
+  addTimedSlider(1, 3400);
 }
 
 function addTimedSlider(track, timeout) {
@@ -71,16 +76,22 @@ function addTimedSlider(track, timeout) {
     addSlider(track);
   }, timeout);    
 }
+
 function addSlider(track) {
   var sliders = document.getElementById("sliders");
-  var slider = document.createElement("div");
-  slider.className +=
+  var slider = {};
+  slider.element = document.createElement("div");
+  slider.track = track;
+  slider.element.className +=
     "slider slider-anim-" + track + " track" + track + " shape color" + track;
-  sliders.append(slider);
+  var d = new Date();
+  slider.addTime = d.getMilliseconds();
+  sliders.append(slider.element);
 
   // Remove the slider after it hits the end
   setTimeout(function() {
-    slider.remove();
+    slider.element.remove();
+    slider = {}
   }, 1500);
 }
 
