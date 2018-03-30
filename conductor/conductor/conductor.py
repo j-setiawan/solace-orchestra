@@ -15,11 +15,6 @@ def get_unique_notes_in_channel(notes_in_channel):
         all_notes.append(notes.note)
 
     return sorted(set(all_notes))
-
-# Topic format = orchestra/theatre/channel
-# orchestra - constant
-# theatre - the "room" that the song is played in. Default value is 'default'
-# channel - the "instument being played"
     
 class Conductor:
 
@@ -113,6 +108,7 @@ class Conductor:
 
                 # Message body
                 #  id: unique id for this note. Can be used for correlation by symphony
+                #  program: The general midi identifier of the instrument being played
                 #  track: The track on the game controller that the note will be placed on (1..7)
                 #  note: The midi note number
                 #  channel: The midi channel that denotes the instrument
