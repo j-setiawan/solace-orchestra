@@ -17,15 +17,16 @@ The following list defines the items that are present in topics and messages:
 
 ## Topic Format
 
-Point to Point topic format = orchestra/<component-type>/<id>
+General topic format is orchestra/<destination-type[/<id1>[/<id2>]]
 
-
-
-
-Topic format = orchestra/theatre/channel
 * **orchestra** - constant
-* **theatre** - the "room" that the song is played in. Default value is 'default'
-* **channel** - the "midi channel the notes are being played on"
+* **destination_type** - the type of destination. It is one of:
+  * **p2p** - point-to-point - this requires a third level in the topic that contains the **client_id**.
+    e.g. orchestra/p2p/123123
+  * **broadcast** - send to everyone. e.g. orchestra/broadcast
+  * **theatre** - send to everyone in a specific theatre. This requires a theatre_id. e.g. orchestra/theatre/345
+  * **channel** - sent to a specific channel in a song. The id following this has the theatre id followed by the channel id. e.g. for a theatre of 345 and a channel of 14, orchestra/channel/345/14
+* **ids** - identifiers specific to the destination type
 
 
 ## Message Types
@@ -59,6 +60,10 @@ All reply messages have the msg_type field set to the received msg_type with '_r
 For example, if a component receives a message with the msg_type set to 'ping', it will response with
 a msg_type of 'ping_response'.
 
+The topic used for all reply message is created by appending the received **client-id** to 'orchestra/p2p/'.
+For example, if a component with a client id of 123123 is being replied to, then the topic would be
+orchestra/p2p/123123.
+
 
 ### Registration Message
 
@@ -67,6 +72,8 @@ by the dashboard so that it can list and coordinate the songs.
 
 Registration messages are specific to the type of component registering. Each message contains the manditory
 fields listed above.
+
+This message is sent to the topic: orchestra/registration
 
 On reception of the register message, the dashboard will reply to the sender's p2p address
 (orchestra/p2p/<client_id>) with the msg_type of 'register_response'.
@@ -136,7 +143,7 @@ The topic for these messages is: orchestra/p2p/<client_id>
 Stop song messages are sent by the dashboard to all components participating in a theatre. When recieved all
 components must immediately stop the current song.
 
-The topic for these messages is: orchestra/mcast
+The topic for these messages is: orchestra/broadcast
 
 No reply is sent by the receiving components.
 
@@ -145,11 +152,16 @@ No reply is sent by the receiving components.
 This message only contains the manditory fields. It will be immediately responded to. It can be used for time
 synchronization and latency measurements.
 
+A ping message can be sent to a specific client using its p2p address (orchestra/p2p/<client_id>) or to
+all components using the broadcast address orchestra/p2p/broadcast.
+
 ### Music Score Message
 
 This message is used by the conductor to issue one or more notes that will be played in the future.
 These messages are sent on individual channels. Each musician should be subscribed to a single channel,
 while the symphony would subscribe to all channels (using a wildcard in the subscription).
+
+This message is sent to the topic: orchestra/theatre/<theatre_id>
 
 The message format for this is:
 
@@ -158,6 +170,8 @@ The message format for this is:
   * **play_time** - time in future when this note should be played
   * **note** - the midi note number
   * **track** - the track on the game controller that the note will be placed on (1..7)
+  * **duration** - length in time of note (This is needed by the symphony to play the note for the
+    right length, but could also be used on the game controller to show a longer sound...)
 
 Note that the conductor could send a message per note or even send all notes for the entire song in a
 single message.
