@@ -33,15 +33,16 @@ General topic format is orchestra/\<destination-type>/\<optional-id1>/\<optional
 
 The following table lists all message types. Subsequent sections will describe the format and semantics of them.
 
-| msg_type     | Exchange Pattern | Description |
-| --------     | ---------------- | ----------- |
-| register     | Request-reply    | Sent to the dashboard by each component when it starts |
-| start_song   | Request-reply    | Sent by the dashboard to tell all components that a new song is starting |
-| stop_song    | Fire-and-forget  | Sent by the dashboard to tell all components that the current song should be stopped |
-| music_score  | Fire-and-forget  | Sent by the conductor on a per channel basis to let all musicians know what to play and when to play it |
-| play_note    | Fire-and-forget  | Sent for each note played by each musician to indicate when a note is played | 
-| ping         | Request-reply    | Empty message (with reply info). The receiver will immediately reply
-| score_update | Fire-and-forget  | Sent by musician to indicate the current score
+| msg_type      | Exchange Pattern | Description |
+| --------      | ---------------- | ----------- |
+| register      | Request-reply    | Sent to the dashboard by each component when it starts |
+| start_song    | Request-reply    | Sent by the dashboard to tell all components that a new song is starting |
+| stop_song     | Fire-and-forget  | Sent by the dashboard to tell all components that the current song should be stopped |
+| complete_song | Fire-and-forget  | Sent by the symphony to indicate that the song is now complete |
+| music_score   | Fire-and-forget  | Sent by the conductor on a per channel basis to let all musicians know what to play and when to play it |
+| play_note     | Fire-and-forget  | Sent for each note played by each musician to indicate when a note is played | 
+| ping          | Request-reply    | Empty message (with reply info). The receiver will immediately reply
+| score_update  | Fire-and-forget  | Sent by musician to indicate the current score
 
 
 
@@ -144,6 +145,15 @@ Stop song messages are sent by the dashboard to all components participating in 
 components must immediately stop the current song.
 
 The topic for these messages is: orchestra/broadcast
+
+No reply is sent by the receiving components.
+
+### Complete Song Message
+
+Complete song messages are sent by the symphony to all components participating in a theatre. When recieved all
+components know that the song is over.
+
+The topic for these messages is: orchestra/theatre/<theatre_id>
 
 No reply is sent by the receiving components.
 
