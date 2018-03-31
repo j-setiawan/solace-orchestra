@@ -181,7 +181,7 @@ single message.
 This message is sent by the musician for each note played in the application. It is a fire-and-forget message
 destined for the symphony component so that it can be played.
 
-This message is sent to the topic: orchestra/\<theatre_id>/note
+This message is sent to the topic: orchestra/theatre\<theatre_id>/note
 
 The format of the message is:
 
