@@ -17,7 +17,7 @@ The following list defines the items that are present in topics and messages:
 
 ## Topic Format
 
-General topic format is orchestra/<destination-type[/<id1>[/<id2>]]
+General topic format is orchestra/<destination-type>/<optional-id1>/<optional-id2>
 
 * **orchestra** - constant
 * **destination_type** - the type of destination. It is one of:
@@ -26,7 +26,7 @@ General topic format is orchestra/<destination-type[/<id1>[/<id2>]]
   * **broadcast** - send to everyone. e.g. orchestra/broadcast
   * **theatre** - send to everyone in a specific theatre. This requires a theatre_id. e.g. orchestra/theatre/345
   * **channel** - sent to a specific channel in a song. The id following this has the theatre id followed by the channel id. e.g. for a theatre of 345 and a channel of 14, orchestra/channel/345/14
-* **ids** - identifiers specific to the destination type
+* **optional-ids** - identifiers specific to the destination type
 
 
 ## Message Types
