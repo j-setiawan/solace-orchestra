@@ -17,7 +17,7 @@ The following list defines the items that are present in topics and messages:
 
 ## Topic Format
 
-General topic format is orchestra/<destination-type>/<optional-id1>/<optional-id2>
+General topic format is orchestra/\<destination-type>/\<optional-id1>/\<optional-id2>
 
 * **orchestra** - constant
 * **destination_type** - the type of destination. It is one of:
@@ -76,7 +76,7 @@ fields listed above.
 This message is sent to the topic: orchestra/registration
 
 On reception of the register message, the dashboard will reply to the sender's p2p address
-(orchestra/p2p/<client_id>) with the msg_type of 'register_response'.
+(orchestra/p2p/\<client_id>) with the msg_type of 'register_response'.
 
 #### Conductor Registration Message
 
@@ -110,7 +110,7 @@ type of component they are being sent to. The dashboard must retry the request i
 
 Their formats are defined in the following sections.
 
-The topic for these messages is: orchestra/p2p/<client_id>
+The topic for these messages is: orchestra/p2p/\<client_id>
 
 #### Conductor Start Song Message
 
@@ -152,7 +152,7 @@ No reply is sent by the receiving components.
 This message only contains the manditory fields. It will be immediately responded to. It can be used for time
 synchronization and latency measurements.
 
-A ping message can be sent to a specific client using its p2p address (orchestra/p2p/<client_id>) or to
+A ping message can be sent to a specific client using its p2p address (orchestra/p2p/\<client_id>) or to
 all components using the broadcast address orchestra/p2p/broadcast.
 
 ### Music Score Message
@@ -161,7 +161,7 @@ This message is used by the conductor to issue one or more notes that will be pl
 These messages are sent on individual channels. Each musician should be subscribed to a single channel,
 while the symphony would subscribe to all channels (using a wildcard in the subscription).
 
-This message is sent to the topic: orchestra/theatre/<theatre_id>
+This message is sent to the topic: orchestra/theatre/\<theatre_id>
 
 The message format for this is:
 
@@ -181,7 +181,7 @@ single message.
 This message is sent by the musician for each note played in the application. It is a fire-and-forget message
 destined for the symphony component so that it can be played.
 
-This message is sent to the topic: orchestra/<theatre_id>/note
+This message is sent to the topic: orchestra/\<theatre_id>/note
 
 The format of the message is:
 
