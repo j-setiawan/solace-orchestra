@@ -7,7 +7,10 @@ The following list defines the items that are present in topics and messages:
 * **client_id**: A unique identifier in the orchestra application of the sender of a message
 * **msg_id**: An identifier attached to a request-reply message to allow correlation of responses
 * **current_time**: Number of milliseconds since epoch. Synched to application time
+* **song_id**: An indentifier for each song within a conductor
 * **note_id**: An indentifier for each note on each channel. It must be unique in a song
+* **channel_id**: An identifier for each channel within a song
+* **theatre_id**: An identifier for each theatre
 * **play_time**: The time that a player should play a note
 * **component_type**: The type of component - enum: conductor, musician, symphony
 * **msg_type**: The type of message. See message types below
@@ -77,6 +80,7 @@ On reception of the register message, the dashboard will reply to the sender's p
     * **song_name** - name of song as it will be displayed
     * **song_length** - length of song in seconds
     * **song_channels** - an array of objects containing channel information
+      * **channel_id**
       * **instrument_name**
       * **num_notes**
 
