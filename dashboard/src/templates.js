@@ -5,6 +5,18 @@ import env from '../environment/env';
 jst.makeGlobal();
 
 let templates;
+
+let formatters = {
+
+  secsToTime: (secs) => {
+    let date = new Date(null);
+    date.setSeconds(secs);
+    return date.toISOString().substr(11, 8);
+  }
+
+};
+
+
 export default templates = {
 
   page:  (data) => $div({cn: 'main-page'},
@@ -31,12 +43,12 @@ export default templates = {
                        templates.pane({name: "status",
                                        title: "Status",
                                        bodyTemplate: templates.statusBody},
-                                      data),
+                                      data)
                   ),
 
   pane: (opts, data) => $div({cn: `pane ${opts.name}-pane`},
                              templates.paneHeader(opts, data),
-                             opts.bodyTemplate ? opts.bodyTemplate(opts, data) : undefined
+                             opts.bodyTemplate ? jst.stamp(opts.name, opts.bodyTemplate, opts, data) : undefined
                             ),
 
   paneHeader: (opts) => $div({cn: `pane-header ${opts.name}-pane-header`},
@@ -57,7 +69,7 @@ export default templates = {
                                  templates.table({
                                    fields: [
                                      {title: "Name", name: "name"},
-                                     {title: "Length", name: "length"},
+                                     {title: "Length", name: "length", format: formatters.secsToTime},
                                      {title: "# Channels", name: "numChannels"},
                                    ],
                                    model: data.songs
@@ -84,18 +96,19 @@ export default templates = {
   table: (opts) => $table({cn: 'pane-table'},
                           $thead(
                             $tr(
-                              opts.fields.map(field => $th(field.title))
+                              opts.fields.map(field => $th({cn: `th-${field.name}`}, field.title))
                             )
                           ),
                           $tbody(
                             opts.model.map(
                               row => $tr(
-                                opts.fields.map(field => $td(row[field.name]))
+                                opts.fields.map(field => $td({cn: `td-${field.name}`},
+                                                             field.format ?
+                                                             field.format(row[field.name], row) :
+                                                             row[field.name]))
                               )
                             )
                           )
-                         )
-
-
+                         ),
 
 };

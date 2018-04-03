@@ -1,3 +1,8 @@
+html, body {
+  overflow-y:hidden;
+  height:100%;
+}
+
 body {
     margin:     0px;
     padding:    0px;
@@ -23,6 +28,7 @@ th {
 }
 
 .pane {
+    position: relative;
     border: 0px solid black;
     padding: 0px;
     margin: 0px;
@@ -30,27 +36,43 @@ th {
     box-shadow: 0px 0px 2px rgba(0,0,0,1) inset;
 }
 
+.pane td,.pane th {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
 .pane-header {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
     background-color: black;
     color: white;
     padding: 5px;
+    z-index: 1;
 }
 
 .pane-body {
-    padding: 5px;
-    overflow: scroll;
+    position: absolute;
+    top: 25pt;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    padding: 5px 5px 5px 5px;
+    //height: 100%;
+    overflow: overlay;
 }
 
 .conductor-pane {
     float: left;
     width: 40vw;
-    height: 30vh;
+    height: 25vh;
 }
 
 .song-pane {
     float: left;
     width: 40vw;
-    height: 30vh;
+    height: 35vh;
 }
 
 .player-pane {
@@ -64,3 +86,5 @@ th {
     width: 100%;
     height: 40vh;
 }
+
+
