@@ -246,7 +246,7 @@ class Dashboard {
     setInterval(() => {
       this.musicians[0].hits++;
       jst.update("musician");
-    }, 1);
+    }, 100);
   }
 
   clearButton() {
