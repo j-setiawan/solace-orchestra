@@ -244,8 +244,10 @@ class Dashboard {
 
   incButton() {
     setInterval(() => {
-      this.musicians[0].hits++;
-      jst.update("musician");
+      if (this.musicians[0]) {
+        this.musicians[0].hits++;
+        jst.update("musician");
+      }
     }, 100);
   }
 
