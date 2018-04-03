@@ -57,6 +57,8 @@ All messages are json objects. All contain the following properties (defined abo
 * **msg_type**
 * **msg_id**
 
+### General Reply Messages
+
 All reply messages have the msg_type field set to the received msg_type with '_response' appended to it.
 For example, if a component receives a message with the msg_type set to 'ping', it will response with
 a msg_type of 'ping_response'.
@@ -65,6 +67,11 @@ The topic used for all reply message is created by appending the received **clie
 For example, if a component with a client id of 123123 is being replied to, then the topic would be
 orchestra/p2p/123123.
 
+All reply messages must contain the general maditory proporties plus a **status** property. If the request
+was successful, the status is set to 'ok'. If there is a problem, it is set to 'error'. In the error case, there 
+is an additional property call 'message' that can contain a text description of the problem.
+
+Reply messages may contain type specific information that will be defined later.
 
 ### Registration Message
 
