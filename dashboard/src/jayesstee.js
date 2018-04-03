@@ -138,18 +138,22 @@ class JstElement {
     }
 
     for (let item of this.contents) {
-      if (!item.el && !item.value.el) {
-        if (item.type === "jst") {
-          el.appendChild(item.value.dom());
+      if (item.type === "jst") {
+        let hasEl   = item.value.el;
+        let childEl = item.value.dom();
+        if (!hasEl) {
+          el.appendChild(childEl);
         }
-        else if (item.type === "textnode") {
+      }
+      else if (item.type === "textnode") {
+        if (!item.el) {
           item.el             = document.createElement("span");
           item.el.textContent = item.value;
           el.appendChild(item.el);
         }
-        else {
-          console.warn("Unexpected content type while dominating:", item.type);
-        }
+      }
+      else {
+        console.warn("Unexpected content type while dominating:", item.type);
       }
     }
 
@@ -163,16 +167,11 @@ class JstElement {
 
     // Remove all items associated with this JstElement
     for (let item of this.contents) {
-      if (item.type === "jst") {
-        item.value.delete();
-      }
-      else if (item.type === "textnode" && item.el && item.el.parentNode) {
-        // Remove the span element
-        item.el.parentNode.removeChild(item.el);
-      }
-      else {
-        console.warn("Unexpected content type while deleting:", item.type);
-      }
+      this._deleteItem(item);
+    }
+
+    for (let stampName of Object.keys(this.stamps)) {
+      jst.deleteStamp(stampName);
     }
 
     // Delete this element, if present
@@ -197,23 +196,26 @@ class JstElement {
     let stampInfo = this.stamps[stampName];
 
     if (!stampInfo) {
-      console.error("Can't find requested stamp (", stampName, ") for reStamping");
+      //console.error("Can't find requested stamp (", stampName, ") for reStamping");
+      throw("Can't find requested stamp (" + stampName + ") for reStamping");
     }
 
     let stamp = stampInfo.stamp;
 
     // Go through the contents and remove all the ones that are for this stamp
     let firstIndex = -1;
-    let index = 0;
-    let count = 0;
+    let index      = 0;
+    let count      = 0;
     for (let item of this.contents) {
       if (item.stampName && item.stampName === stampName) {
         if (item.type === "jst") {
           item.value.delete();
         }
-        else if (item.type === "textnode" && item.el && item.el.parentNode) {
-          // Remove the span element
-          item.el.parentNode.removeChild(item.el);
+        else if (item.type === "textnode") {
+          if (item.el && item.el.parentNode) {
+            // Remove the span element
+            item.el.parentNode.removeChild(item.el);
+          }
         }
         else {
           console.warn("Unexpected content type while deleting:", item.type);
@@ -255,7 +257,116 @@ class JstElement {
       this.dom();
     }
 
+  }
+
+  update(stampName, params) {
+
+    let stampInfo = this.stamps[stampName];
+
+    if (!stampInfo) {
+      throw("Can't find requested stamp (" + stampName + ") for reStamping");
+    }
+
+    let stamp = stampInfo.stamp;
+
+    // Create a new JST tree that will be compared against the existing one
+    let items = stamp.getTemplate().apply(this, stamp.getParams());
+
+    // newJst will contain the new stamped tree
+    let newJst = new JstElement("div");
+    newJst._processParams([items], stamp.getName());
+
+    this._compareAndCopy(newJst, stamp.getName());
     
+    // If we were already domified, then redo it for the new elements
+    if (this.isDomified) {
+      this.dom();
+    }
+    
+  }
+
+  _compareAndCopy(newJst, stampName) {
+
+    let replaceItems = false;
+    let oldIndex = 0;
+    let newIndex = 0;
+
+    while (true) {
+      
+      let oldItem = this.contents[oldIndex];
+      let newItem = newJst.contents[newIndex];
+
+      if (!oldItem || !newItem) {
+        break;
+      }
+      
+      if (stampName && oldItem.stampName !== stampName) {
+        oldIndex++;
+        continue;
+      }
+
+      if (oldItem.type !== newItem.type) {
+        break;
+      }
+
+      if (oldItem.type === "jst") {
+        if (oldItem.value.tag != newItem.value.tag) {
+          break;
+        }
+        // If the tags are the same, then we must descend and compare
+        oldItem.value._compareAndCopy(newItem.value);
+      }
+      else if (oldItem.type === "textnode" && oldItem.value != newItem.value) {
+        if (oldItem.el) {
+          oldItem.el.textContent = newItem.value;
+        }
+        oldItem.value = newItem.value;
+      }
+
+      oldIndex++;
+      newIndex++;
+      
+    }
+
+    // Need to copy stuff - first delete all the old contents
+    let oldStartIndex = oldIndex;
+    let oldItem       = this.contents[oldIndex];
+
+    while (oldItem) {
+      if (stampName && oldItem.stampName !== stampName) {
+        break;
+      }
+      this._deleteItem(oldItem);
+      oldIndex++;
+      oldItem = this.contents[oldIndex];
+    }
+
+    this.contents.splice(oldStartIndex, oldIndex-oldStartIndex);
+    
+    if (newJst.contents[newIndex]) {
+
+      // Remove the old stuff and insert the new
+      let newItems = newJst.contents.splice(newIndex, newJst.contents.length-newIndex);
+      this.contents.splice(oldStartIndex, 0, ...newItems);
+      
+    }
+    
+  }
+
+  _deleteItem(contentsItem) {
+    if (contentsItem.type === "jst") {
+        contentsItem.value.delete();
+    }
+    else if (contentsItem.type === "textnode") {
+      if (contentsItem.el && contentsItem.el.parentNode) {
+        // Remove the span element
+        contentsItem.el.parentNode.removeChild(contentsItem.el);
+        contentsItem.el = undefined;
+      }
+    }
+    else {
+      console.warn("Unexpected content type while deleting:", contentsItem.type);
+    }
   }
   
   _processParams(params, stampName) {
@@ -451,7 +562,7 @@ jst.extend({
     if (this.stamps[name]) {
       let i = 0;
       while (true) {
-        newName = `name-${i}`;
+        newName = `${name}-${i}`;
         if (!this.stamps[newName]) {
           break;
         }
@@ -465,14 +576,23 @@ jst.extend({
   },
 
   reStamp: function(stampName, template, ...params) {
-
     let stamp = this.stamps[stampName];
     if (!stamp) {
-      console.error("Unknown stamp name:", stampName);
+      throw("Unknown stamp name: " + stampName);
     }
-
     stamp.getParent().reStamp(stampName, template, params);
-    
+  },
+
+  update: function(stampName, ...params) {
+    let stamp = this.stamps[stampName];
+    if (!stamp) {
+      throw("Unknown stamp name: " + stampName);
+    }
+    stamp.getParent().update(stampName, params);
+  },
+
+  deleteStamp: function(stampName) {
+    delete(this.stamps[stampName]);
   },
 
   makeGlobal: function(prefix) {

@@ -59,23 +59,28 @@ th {
     left: 0px;
     right: 0px;
     padding: 5px 5px 5px 5px;
-    //height: 100%;
-    overflow: overlay;
+    overflow: auto;
 }
 
 .conductor-pane {
     float: left;
     width: 40vw;
-    height: 25vh;
+    height: 18vh;
 }
 
 .song-pane {
     float: left;
     width: 40vw;
-    height: 35vh;
+    height: 25vh;
 }
 
-.player-pane {
+.symphony-pane {
+    float: left;
+    width: 40vw;
+    height: 17vh;
+}
+
+.musician-pane {
     float: right;
     width: 60vw;
     height: 60vh;
@@ -84,7 +89,13 @@ th {
 .status-pane {
     clear: both;
     width: 100%;
-    height: 40vh;
+    height: 25vh;
+}
+
+.buttons-pane {
+    clear: both;
+    width: 100%;
+    height: 15vh;
 }
 
 

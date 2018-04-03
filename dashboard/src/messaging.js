@@ -7,6 +7,7 @@ export default class Messaging {
   
   constructor(opts) {
     this.isConnected = false;
+    this.msgId       = 1;
     this.myId        = Math.random().toString().substr(2);
 
     this.callbacks   = opts.callbacks;
@@ -17,25 +18,28 @@ export default class Messaging {
         password: env.broker.password
       });
 
+    let self = this;
     this.client.on("connect", function() {
-      this.connected.apply(this);
+      self.connected.apply(self);
     });
 
     this.client.on('message', function (topic, message) {
-      this.rxMessage.apply(this, [topic, message]);
+      self.rxMessage.apply(self, [topic, message]);
     });
 
   }
 
   connected() {
     this.isConnected = true;
+    if (this.callbacks.connected) {
+      this.callbacks.connected();
+    }
+  }
 
-    // Subscribe to all required topics
-    for (let topic of [
-      "orchestra/broadcast",
-      "orchestra/p2p/" + this.myId,
-      "orchestra/registration"
-    ]);    
+  subscribe(...subs) {
+    for (let sub of subs) {
+      this.client.subscribe(sub);
+    }
   }
 
   rxMessage(topic, messageText) {
@@ -86,7 +90,7 @@ export default class Messaging {
   }
 
   sendResponse(rxMessage, txMessage) {
-    let topic          = this.replyTopic(rxMessage.client_id);
+    let topic          = this.makeReplyTopic(rxMessage.client_id);
     txMessage.msg_type = rxMessage.msg_type + "_response";
     txMessage.msg_id   = rxMessage.msg_id;
     this.sendMessage(topic, txMessage);
@@ -94,15 +98,24 @@ export default class Messaging {
   
   sendMessage(topic, message) {
     message.client_id    = this.myId;
-    message.current_time = (new Date()).getTime(); 
+    message.current_time = (new Date()).getTime();
+
+    if (!message.msg_id) {
+      message.msg_id = this.msgId++;
+    }
     
     if (!this.isConnected) {
       console.error("Not yet connected");
     }
 
+    // console.log("Publishing:", topic, message);
     this.client.publish(topic,
                         JSON.stringify(message));
 
+  }
+
+  makeReplyTopic(clientId) {
+    return `orchestra/p2p/${clientId}`;
   }
 
   getIsConnected() {
