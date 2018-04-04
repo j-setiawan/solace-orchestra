@@ -1,3 +1,6 @@
+// Amount of time it takes the slider to slide down the track
+var sliderTime = 1.5;
+
 function initializeMessaging(msgHandler) {
 
   var factoryProps = new solace.SolclientFactoryProperties();
@@ -18,7 +21,7 @@ function initializeMessaging(msgHandler) {
     let contents = message.getBinaryAttachment();
     console.log("Got a message", contents);
     message = JSON.parse(contents);
-    msgHandler(parseInt(message.track), 0);
+    msgHandler(message, 0);
   });
 
   session.on(solace.SessionEventCode.UP_NOTICE, function (sessionEvent) {
@@ -45,54 +48,114 @@ function initializeMessaging(msgHandler) {
   return session;
 }
 
+var allSliders = [];
+
+function addDemoSliders() {
+  addDemoSlider(1, 1, 0);
+  addDemoSlider(2, 3, 100);
+  addDemoSlider(3, 2, 200);
+  addDemoSlider(4, 4, 300);
+  addDemoSlider(5, 3, 400);
+  addDemoSlider(6, 5, 500);
+  addDemoSlider(7, 4, 600);
+  addDemoSlider(8, 6, 700);
+  addDemoSlider(9, 5, 800);
+  addDemoSlider(10, 7, 900);
+  addDemoSlider(11, 6, 1000);
+  addDemoSlider(12, 4, 1100);
+  addDemoSlider(13, 5, 1200);
+  addDemoSlider(14, 3, 1300);
+  addDemoSlider(15, 4, 1400);
+  addDemoSlider(16, 2, 1500);
+  addDemoSlider(17, 3, 1600);
+  addDemoSlider(18, 1, 1700);
+}
+
 function setup() {
   mainLoop();
 }
 
 function mainLoop() {
   initializeMessaging(addTimedSlider);
-  addTimedSlider(1, 0);
-  addTimedSlider(3, 200);
-  addTimedSlider(2, 400);
-  addTimedSlider(4, 600);
-  addTimedSlider(3, 800);
-  addTimedSlider(5, 1000);
-  addTimedSlider(4, 1200);
-  addTimedSlider(6, 1400);
-  addTimedSlider(5, 1600);
-  addTimedSlider(7, 1800);
-  addTimedSlider(6, 2000);
-  addTimedSlider(4, 2200);
-  addTimedSlider(5, 2400);
-  addTimedSlider(3, 2600);
-  addTimedSlider(4, 2800);
-  addTimedSlider(2, 3000);
-  addTimedSlider(3, 3200);
-  addTimedSlider(1, 3400);
+  addDemoSliders();
 }
 
-function addTimedSlider(track, timeout) {
+function addTimedSlider(message) {
+  var timeoutSeconds = message.play_time - message.current_time - sliderTime;
+  if (timeoutSeconds < 1.5) {
+    timeoutSeconds = 1.5;
+  }
+
   setTimeout(function() {
-    addSlider(track);
-  }, timeout);    
+    addSlider(message.id, message.track);
+  }, timeoutSeconds * 1000);   
 }
 
-function addSlider(track) {
-  var sliders = document.getElementById("sliders");
+function addDemoSlider(id, track, timeout) {
+  setTimeout(function() {
+    addSlider(id, track);
+  }, timeout);   
+}
+
+function buildSlider(id, track) {
   var slider = {};
   slider.element = document.createElement("div");
   slider.track = track;
+  slider.id = id;
   slider.element.className +=
     "slider slider-anim-" + track + " track" + track + " shape color" + track;
-  var d = new Date();
-  slider.addTime = d.getMilliseconds();
-  sliders.append(slider.element);
+
+  slider.addTime = Date.now();
+  return slider;
+}
+
+function addSlider(id, track) {
+  var sliders = document.getElementById("sliders");
+  var slider = buildSlider(id, track);
+  sliders.appendChild(slider.element);
+
+  allSliders.push(slider);
 
   // Remove the slider after it hits the end
   setTimeout(function() {
     slider.element.remove();
-    slider = {}
-  }, 1500);
+    slider.removeTime = Date.now();
+    slider = {};
+  }, sliderTime * 1000);
+
+  // Remove the event
+  setTimeout(function() {
+    var index = allSliders.map(function(s) { return s.id; }).indexOf(id);
+    console.log("Removing slider at index", index);
+    allSliders.splice(index, 1);    
+  }, sliderTime * 1000 + 200);
+}
+
+function buttonPress(track) {
+  console.log("Button press on track", track);
+  // Check if there are any sliders for this track
+  var index = allSliders.map(function(s) {
+    if (s.pressed != null) {
+     return null; 
+    } else
+    return s.track;
+    }).indexOf(track);
+  var slider = allSliders[index];
+
+  if (slider != null) {
+    slider.pressed = true;
+    var currentTime = Date.now();
+
+    if (slider.removeTime != null) {
+      console.log("Too late by", currentTime - slider.removeTime);
+    } else {
+      console.log("Too early by", (slider.addTime + (sliderTime * 1000)) - currentTime);
+    }
+
+  } else {
+    console.log("No slider!!");
+  }
+  //console.log(slider, currentTime);
 }
 
 window.onload = setup;
