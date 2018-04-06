@@ -8,6 +8,8 @@ from solace.client import SolaceMQTTClient
 from os import listdir, getcwd
 from os.path import isfile, join
 
+import json
+
 def get_unique_notes_in_channel(notes_in_channel):
     """ Utility function to get an ordered set of unique notes in the channel """
     all_notes = []
@@ -20,7 +22,7 @@ class Conductor:
 
     def __init__(self):
         
-        self.channel_instrument = []
+        self.channel_instrument = {}
 
         # The conversion of MIDI notes is based on this: 
         # https://www.midikits.net/midi_analyser/midi_note_numbers_for_octaves.htm
@@ -90,12 +92,8 @@ class Conductor:
                 unique_notes = get_unique_notes_in_channel(notes_in_channel)
                 self.channels[channel_number]['unique'] = unique_notes
 
-                program_change = next((m for m in channel if m.type == 'program_change'), None)
-
-                if program_change:
-                    self.channel_instrument.insert(channel_number, program_change.program)
-                else:
-                    self.channel_instrument.insert(channel_number, 0)
+                program_change = next((m for m in channel if m.type == 'program_change'), {'program': 0})
+                self.channel_instrument[channel_number] = program_change.program
 
 
     def play_song(self):
@@ -106,6 +104,8 @@ class Conductor:
                 unique_notes = self.channels[channel_number]['unique']
                 print(str(msg.channel) + ": " + self.notes[msg.note % 12])
 
+                current_time = time.time()
+
                 # Message body
                 #  id: unique id for this note. Can be used for correlation by symphony
                 #  program: The general midi identifier of the instrument being played
@@ -114,17 +114,20 @@ class Conductor:
                 #  channel: The midi channel that denotes the instrument
                 #  current_time: Epoch time in seconds UTC
                 #  play_time: The time the note should be played
-                message_body = '{ ' + \
-                '"id": "' + str(self.unique_id) + '" ,' + \
-                '"program": ' + str(self.channel_instrument[channel_number]) + ',' +\
-                '"track": "' + str((unique_notes.index(msg.note) % self.number_of_tracks_on_game_controller) + 1) + '" ,' +\
-                '"note": "' + str(msg.note) + '" ,' + \
-                '"channel": "' + str(channel_number) + '" ,' + \
-                '"current_time": "' + str(time.time()) + '" ,' + \
-                '"play_time": "' + str(time.time() + self.game_controller_play_offset_sec) + '"}'
+                message_body = {
+                    'id': str(self.unique_id),
+                    'program': str(self.channel_instrument[channel_number]),
+                    'track': str((unique_notes.index(msg.note) % self.number_of_tracks_on_game_controller) + 1),
+                    'note': str(msg.note),
+                    'channel': str(channel_number),
+                    'current_time': str(current_time),
+                    'play_time': str(current_time + self.game_controller_play_offset_sec),
+                }
+
                 self.unique_id += 1
-                print(topic + message_body)
-                self.solace.publish(topic, message_body)
+                print("Topic: " + topic)
+                print(message_body)
+                self.solace.publish(topic, json.dumps(message_body))
 
 conductor = Conductor()
 conductor.select_song(1)
