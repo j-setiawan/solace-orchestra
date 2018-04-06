@@ -1,7 +1,7 @@
 import jst from '../../common/jayesstee';
 import env from '../../common/env';
 
-// Add HTMgiL elements to global namespace
+// Add HTML elements to global namespace
 jst.makeGlobal();
 
 let templates;
@@ -15,6 +15,7 @@ let formatters = {
   },
 
   addMs: (value) => {
+    value = value || 0;
     return `${value} ms`;
   }
 
@@ -72,7 +73,7 @@ export default templates = {
                                         fields: [
                                           {title: "Name", name: "name"},
                                           {title: "# Songs", name: "numSongs"},
-                                          {title: "RTT", name: "latency", formatter: formatters.addMs},
+                                          {title: "RTT", name: "latency", format: formatters.addMs},
                                         ],
                                         model: data.conductors
                                       })
@@ -93,7 +94,7 @@ export default templates = {
                                  templates.table({
                                    fields: [
                                      {title: "Name", name: "name"},
-                                     {title: "RTT", name: "latency", formatter: formatters.addMs},
+                                     {title: "RTT", name: "latency", format: formatters.addMs},
                                    ],
                                    model: data.symphonies
                                  })
@@ -118,7 +119,7 @@ export default templates = {
                                        {title: "Hits", name: "hits"},
                                        {title: "Misses", name: "misses"},
                                        {title: "%", name: "percent"},
-                                       {title: "RTT", name: "latency", formatter: formatters.addMs},
+                                       {title: "RTT", name: "latency", format: formatters.addMs},
                                      ],
                                      model: data.musicians
                                    })
