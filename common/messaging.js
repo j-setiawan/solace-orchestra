@@ -1,10 +1,9 @@
-import mqtt from "mqtt";
-import env  from "../environment/env";
+import env  from "./env";
 
 
 export default class Messaging { 
   
-  constructor(opts) {
+  constructor(mqtt, opts) {
     this.isConnected    = false;
     this.msgId          = 1;
     this.myId           = Math.random().toString().substr(2);

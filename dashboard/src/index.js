@@ -1,7 +1,8 @@
-import env       from '../environment/env';
-import jst       from './jayesstee';
+import env       from '../../common/env';
+import jst       from '../../common/jayesstee';
+import Messaging from '../../common/messaging';
 import templates from './templates';
-import Messaging from './messaging';
+import mqtt      from "mqtt";
 import $         from 'jquery';
 
 import './style.css';
@@ -20,28 +21,31 @@ class Dashboard {
 
     this.testSeqNum   = 0;
     
-    this.messaging = new Messaging({
-      callbacks: {
-        connected: (...args) => {
-          this.connected.apply(this, args);
-        },
-        register: (...args) => {
-          this.register.apply(this, args);
-        },
-        start_song: (...args) => {
-          this.startSong.apply(this, args);
-        },
-        stop_song: (...args) => {
-          this.stopSong.apply(this, args);
-        },
-        complete_song: (...args) => {
-          this.completeSong.apply(this, args);
-        },
-        score_update: (...args) => {
-          this.scoreUpdate.apply(this, args);
+    this.messaging = new Messaging(
+      mqtt,
+      {
+        callbacks: {
+          connected: (...args) => {
+            this.connected.apply(this, args);
+          },
+          register: (...args) => {
+            this.register.apply(this, args);
+          },
+          start_song: (...args) => {
+            this.startSong.apply(this, args);
+          },
+          stop_song: (...args) => {
+            this.stopSong.apply(this, args);
+          },
+          complete_song: (...args) => {
+            this.completeSong.apply(this, args);
+          },
+          score_update: (...args) => {
+            this.scoreUpdate.apply(this, args);
+          }
         }
       }
-    });
+    );
 
     // Fill in all the HTML from the templates
     jst("body").appendChild(jst.stamp("dashboard", templates.page, this));

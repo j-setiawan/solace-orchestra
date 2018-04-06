@@ -1,7 +1,7 @@
-import jst from './jayesstee';
-import env from '../environment/env';
+import jst from '../../common/jayesstee';
+import env from '../../common/env';
 
-// Add HTML elements to global namespace
+// Add HTMgiL elements to global namespace
 jst.makeGlobal();
 
 let templates;
