@@ -6,7 +6,6 @@ import $         from 'jquery';
 
 import './style.css';
 
-
 class Dashboard {
 
   constructor() {
@@ -82,6 +81,8 @@ class Dashboard {
       }
     }
 
+    let componentAdded;
+    
     if (message.component_type === "conductor") {
       if (!message.song_list) {
         console.log("Received invalid register message. Missing song_list");
@@ -126,6 +127,8 @@ class Dashboard {
         numSongs: message.song_list.length
       };
       this.conductors = Object.values(this.conductorMap);
+
+      componentAdded = this.conductorMap[message.name];
         
       //console.log("Registered:", this.songs, message);
       jst.update("conductor");
@@ -142,6 +145,8 @@ class Dashboard {
         latency: message.latency || 0
       };
 
+      componentAdded = this.musicianMap[message.name];
+
       this.musicians = Object.values(this.musicianMap);
       jst.update("musician");
       
@@ -152,6 +157,9 @@ class Dashboard {
         name: message.name,
         latency: 0
       };
+
+      componentAdded = this.symphonyMap[message.name];
+
       this.symphonies = Object.values(this.symphonyMap);
       jst.update("symphony");
       
@@ -164,11 +172,44 @@ class Dashboard {
                                   {status: 'error',
                                    message: 'Unexpected component_type: ' +
                                    message.component_type});
+      return;
       
     }
+
+    componentAdded.component_type = message.component_type;
+    componentAdded.client_id      = message.client_id;
+    
+    this.addPinger(message, componentAdded);
     
     this.messaging.sendResponse(message, {status: 'ok'});
 
+  }
+
+  addPinger(message, component) {
+    component.pingTimer = setInterval(() => {
+      this.messaging.sendMessage(`orchestra/p2p/${component.client_id}`,
+                                 {msg_type: "ping"},
+                                 (txMessage, rxMessage) => {
+                                   this.handlePingResponse(component, txMessage, rxMessage);
+                                 }, 1900);
+    }, 2000);
+    
+  }
+
+  handlePingResponse(component, txMessage, rxMessage) {
+    let latency;
+    if (rxMessage.status === "timeout") {
+      component.pingsMissed++;
+      latency = "?";
+    }
+    else {
+      component.pingsMissed = 0;
+      latency = rxMessage.current_time - txMessage.current_time;
+    }
+    
+    component.latency = latency;
+    jst.update(component.component_type);
+    
   }
   
   startSong(topic, message) {
