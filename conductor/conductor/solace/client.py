@@ -11,18 +11,12 @@ def print_on_message(client, userdata, msg):
 
 
 class SolaceMQTTClient:
-    def __init__(self, on_message=print_on_message, connection_properties=str(Path.home()) + '/solace.cloud'):
-        props = {}
-        with open(connection_properties, "r") as f:
-            for line in f:
-                (key, val) = line.strip().split('=')
-                props[key] = val
-
+    def __init__(self, username, password, url, port, on_message=print_on_message):
         self.client = mqtt.Client()
         self.client.on_connect = on_connect
         self.client.on_message = on_message
-        self.client.username_pw_set(props['username'], password=props['password'])
-        self.client.connect(props['url'], int(props['port']), 60)
+        self.client.username_pw_set(username, password=password)
+        self.client.connect(url, int(port), 60)
 
     def publish(self, topic, body):
         self.client.publish(topic, body)

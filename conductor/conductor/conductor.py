@@ -41,7 +41,23 @@ class Conductor:
         self.theatre = 'default'
 
         # Create and initialize solace messaging client
-        self.solace = SolaceMQTTClient()
+        env_file_json = "{"
+
+        with open('../../common/env.js') as f:
+            for line in f:
+                json_line = line.split(':', 1)
+
+                if len(json_line) == 2:
+                    env_file_json += '"' + json_line[0].lstrip() + '":' + json_line[1].rstrip()
+
+        env_file_json += "}}"
+        common_env = json.loads(env_file_json)
+
+        self.solace = SolaceMQTTClient(
+            common_env['broker']['username'],
+            common_env['broker']['password'],
+            common_env['broker']['url'].rsplit(':', 1)[0].split('://')[1],
+            common_env['broker']['url'].rsplit(':', 1)[1])
 
         # Unique id assigned to each message (note)
         self.unique_id = 0

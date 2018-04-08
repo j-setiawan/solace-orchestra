@@ -1,8 +1,8 @@
-import env from '../environment/env'
-import mqtt from'mqtt';
+import env from '../../common/env'
+import mqtt from 'mqtt';
 
-const Instruments = require('webaudio-instruments')
-const player = new Instruments()
+const Instruments = require('webaudio-instruments');
+const player = new Instruments();
 
 const client  = mqtt.connect(env.broker.url, {
     username: env.broker.username,
