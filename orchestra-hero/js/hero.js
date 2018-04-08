@@ -1,5 +1,5 @@
 // Amount of time it takes the slider to slide down the track
-var sliderTime = 1.5;
+var sliderTimeSecs = 1.5;
 
 function initializeMessaging(msgHandler) {
 
@@ -81,7 +81,7 @@ function mainLoop() {
 }
 
 function addTimedSlider(message) {
-  var timeoutSeconds = message.play_time - message.current_time - sliderTime;
+  var timeoutSeconds = message.play_time - message.current_time - sliderTimeSecs;
   if (timeoutSeconds < 1.5) {
     timeoutSeconds = 1.5;
   }
@@ -121,14 +121,14 @@ function addSlider(id, track) {
     slider.element.remove();
     slider.removeTime = Date.now();
     slider = {};
-  }, sliderTime * 1000);
+  }, sliderTimeSecs * 1000);
 
   // Remove the event
   setTimeout(function() {
     var index = allSliders.map(function(s) { return s.id; }).indexOf(id);
     console.log("Removing slider at index", index);
     allSliders.splice(index, 1);    
-  }, sliderTime * 1000 + 200);
+  }, sliderTimeSecs * 1000 + 200);
 }
 
 function buttonPress(track) {
@@ -149,7 +149,7 @@ function buttonPress(track) {
     if (slider.removeTime != null) {
       console.log("Too late by", currentTime - slider.removeTime);
     } else {
-      console.log("Too early by", (slider.addTime + (sliderTime * 1000)) - currentTime);
+      console.log("Too early by", (slider.addTime + (sliderTimeSecs * 1000)) - currentTime);
     }
 
   } else {

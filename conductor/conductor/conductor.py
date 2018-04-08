@@ -22,7 +22,7 @@ class Conductor:
 
     def __init__(self):
         
-        self.channel_instrument = {}
+        self.channel_instrument = []
 
         # The conversion of MIDI notes is based on this: 
         # https://www.midikits.net/midi_analyser/midi_note_numbers_for_octaves.htm
@@ -62,6 +62,10 @@ class Conductor:
         # note to travel down the UI track component)
         self.game_controller_play_offset_sec = 1.5;
 
+        # The length of a quarter note in milli seconds
+        # 60 seconds / tempo (beats per minute)
+        self.quarterNoteLength = 60/80*1000;
+
     # Reads all of the files in the midi_files directory
     def get_midi_files(self, mypath):
          return [f for f in listdir(mypath) if isfile(join(mypath, f))]
@@ -79,12 +83,14 @@ class Conductor:
 
     def analyze_song(self):
         """ Determine which tracks have enough notes to make it interesting """
+        #pprint(vars(self.selected_song_midi))
         for channel_id in range(len(self.selected_song_midi.tracks)):
             channel = self.selected_song_midi.tracks[channel_id]
             notes_in_channel = [n for n in channel if n.type == "note_on"]
 
             if notes_in_channel:
                 channel_number = notes_in_channel[0].channel
+
                 self.channels[channel_number] = {
                     'instrument': channel.name.strip(),
                     'notes': len(notes_in_channel)
@@ -92,9 +98,12 @@ class Conductor:
                 unique_notes = get_unique_notes_in_channel(notes_in_channel)
                 self.channels[channel_number]['unique'] = unique_notes
 
-                program_change = next((m for m in channel if m.type == 'program_change'), {'program': 0})
-                self.channel_instrument[channel_number] = program_change.program
+                program_change = next((m for m in channel if m.type == 'program_change'), None)
 
+                if program_change:
+                    self.channel_instrument.insert(channel_number, program_change.program)
+                else:
+                    self.channel_instrument.insert(channel_number, 0)
 
     def play_song(self):
         for msg in self.selected_song_midi.play():
@@ -115,14 +124,18 @@ class Conductor:
                 #  current_time: Epoch time in seconds UTC
                 #  play_time: The time the note should be played
                 message_body = {
-                    'id': str(self.unique_id),
-                    'program': str(self.channel_instrument[channel_number]),
-                    'track': str((unique_notes.index(msg.note) % self.number_of_tracks_on_game_controller) + 1),
-                    'note': str(msg.note),
-                    'channel': str(channel_number),
-                    'current_time': str(current_time),
-                    'play_time': str(current_time + self.game_controller_play_offset_sec),
-                }
+                    'note_list': [
+                        {
+                        'note_id': str(self.unique_id),
+                        'program': str(self.channel_instrument[channel_number]),
+                        'track': str((unique_notes.index(msg.note) % self.number_of_tracks_on_game_controller) + 1),
+                        'note': str(msg.note),
+                        'channel': str(channel_number),
+                        'duration': str(self.quarterNoteLength),
+                        'current_time': str(current_time),
+                        'play_time': str(current_time + self.game_controller_play_offset_sec)
+                        }
+                    ]}
 
                 self.unique_id += 1
                 print("Topic: " + topic)
