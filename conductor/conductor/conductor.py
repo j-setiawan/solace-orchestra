@@ -123,16 +123,19 @@ class Conductor:
                 #  channel: The midi channel that denotes the instrument
                 #  current_time: Epoch time in seconds UTC
                 #  play_time: The time the note should be played
-                message_body = [{
-                    'note_id': str(self.unique_id),
-                    'program': str(self.channel_instrument[channel_number]),
-                    'track': str((unique_notes.index(msg.note) % self.number_of_tracks_on_game_controller) + 1),
-                    'note': str(msg.note),
-                    'channel': str(channel_number),
-                    'duration': str(self.quarterNoteLength),
-                    'current_time': str(current_time),
-                    'play_time': str(current_time + self.game_controller_play_offset_sec)
-                }]
+                message_body = {
+                    'note_list': [
+                        {
+                        'note_id': str(self.unique_id),
+                        'program': str(self.channel_instrument[channel_number]),
+                        'track': str((unique_notes.index(msg.note) % self.number_of_tracks_on_game_controller) + 1),
+                        'note': str(msg.note),
+                        'channel': str(channel_number),
+                        'duration': str(self.quarterNoteLength),
+                        'current_time': str(current_time),
+                        'play_time': str(current_time + self.game_controller_play_offset_sec)
+                        }
+                    ]}
 
                 self.unique_id += 1
                 print("Topic: " + topic)
