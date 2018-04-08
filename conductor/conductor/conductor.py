@@ -7,7 +7,6 @@ from solace.client import SolaceMQTTClient
 
 from os import listdir, getcwd
 from os.path import isfile, join
-from pprint import pprint
 
 def get_unique_notes_in_channel(notes_in_channel):
     """ Utility function to get an ordered set of unique notes in the channel """
