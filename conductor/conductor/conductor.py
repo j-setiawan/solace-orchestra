@@ -7,6 +7,7 @@ from solace.client import SolaceMQTTClient
 
 from os import listdir, getcwd
 from os.path import isfile, join
+from pprint import pprint
 
 def get_unique_notes_in_channel(notes_in_channel):
     """ Utility function to get an ordered set of unique notes in the channel """
@@ -60,6 +61,9 @@ class Conductor:
         # note to travel down the UI track component)
         self.game_controller_play_offset_sec = 1.5;
 
+        # The length of a quarter note in milli seconds
+        self.quarterNoteLength = 80/60*1000;
+
     # Reads all of the files in the midi_files directory
     def get_midi_files(self, mypath):
          return [f for f in listdir(mypath) if isfile(join(mypath, f))]
@@ -77,12 +81,14 @@ class Conductor:
 
     def analyze_song(self):
         """ Determine which tracks have enough notes to make it interesting """
+        #pprint(vars(self.selected_song_midi))
         for channel_id in range(len(self.selected_song_midi.tracks)):
             channel = self.selected_song_midi.tracks[channel_id]
             notes_in_channel = [n for n in channel if n.type == "note_on"]
 
             if notes_in_channel:
                 channel_number = notes_in_channel[0].channel
+
                 self.channels[channel_number] = {
                     'instrument': channel.name.strip(),
                     'notes': len(notes_in_channel)
@@ -114,14 +120,15 @@ class Conductor:
                 #  channel: The midi channel that denotes the instrument
                 #  current_time: Epoch time in seconds UTC
                 #  play_time: The time the note should be played
-                message_body = '{ ' + \
-                '"id": "' + str(self.unique_id) + '" ,' + \
+                message_body = '{[' + \
+                '"note_id": "' + str(self.unique_id) + '" ,' + \
                 '"program": ' + str(self.channel_instrument[channel_number]) + ',' +\
                 '"track": "' + str((unique_notes.index(msg.note) % self.number_of_tracks_on_game_controller) + 1) + '" ,' +\
-                '"note": "' + str(msg.note) + '" ,' + \
+                '"note_id": "' + str(msg.note) + '" ,' + \
                 '"channel": "' + str(channel_number) + '" ,' + \
+                '"duration": "' + str(self.quarterNoteLength) + '" ,' + \
                 '"current_time": "' + str(time.time()) + '" ,' + \
-                '"play_time": "' + str(time.time() + self.game_controller_play_offset_sec) + '"}'
+                '"play_time": "' + str(time.time() + self.game_controller_play_offset_sec) + '"]}'
                 self.unique_id += 1
                 print(topic + message_body)
                 self.solace.publish(topic, message_body)
