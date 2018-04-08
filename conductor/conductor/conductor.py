@@ -8,6 +8,8 @@ from solace.client import SolaceMQTTClient
 from os import listdir, getcwd
 from os.path import isfile, join
 
+import json
+
 def get_unique_notes_in_channel(notes_in_channel):
     """ Utility function to get an ordered set of unique notes in the channel """
     all_notes = []
@@ -102,7 +104,6 @@ class Conductor:
                 else:
                     self.channel_instrument.insert(channel_number, 0)
 
-
     def play_song(self):
         for msg in self.selected_song_midi.play():
             if msg.type == "note_on":
@@ -110,6 +111,8 @@ class Conductor:
                 topic = "orchestra/" + self.theatre + '/' + str(channel_number)
                 unique_notes = self.channels[channel_number]['unique']
                 print(str(msg.channel) + ": " + self.notes[msg.note % 12])
+
+                current_time = time.time()
 
                 # Message body
                 #  id: unique id for this note. Can be used for correlation by symphony
@@ -119,18 +122,21 @@ class Conductor:
                 #  channel: The midi channel that denotes the instrument
                 #  current_time: Epoch time in seconds UTC
                 #  play_time: The time the note should be played
-                message_body = '{[' + \
-                '"note_id": "' + str(self.unique_id) + '" ,' + \
-                '"program": ' + str(self.channel_instrument[channel_number]) + ',' +\
-                '"track": "' + str((unique_notes.index(msg.note) % self.number_of_tracks_on_game_controller) + 1) + '" ,' +\
-                '"note_id": "' + str(msg.note) + '" ,' + \
-                '"channel": "' + str(channel_number) + '" ,' + \
-                '"duration": "' + str(self.quarterNoteLength) + '" ,' + \
-                '"current_time": "' + str(time.time()) + '" ,' + \
-                '"play_time": "' + str(time.time() + self.game_controller_play_offset_sec) + '"]}'
+                message_body = [{
+                    'note_id': str(self.unique_id),
+                    'program': str(self.channel_instrument[channel_number]),
+                    'track': str((unique_notes.index(msg.note) % self.number_of_tracks_on_game_controller) + 1),
+                    'note': str(msg.note),
+                    'channel': str(channel_number),
+                    'duration': str(self.quarterNoteLength),
+                    'current_time': str(current_time),
+                    'play_time': str(current_time + self.game_controller_play_offset_sec)
+                }]
+
                 self.unique_id += 1
-                print(topic + message_body)
-                self.solace.publish(topic, message_body)
+                print("Topic: " + topic)
+                print(message_body)
+                self.solace.publish(topic, json.dumps(message_body))
 
 conductor = Conductor()
 conductor.select_song(1)
