@@ -63,7 +63,8 @@ class Conductor:
         self.game_controller_play_offset_sec = 1.5;
 
         # The length of a quarter note in milli seconds
-        self.quarterNoteLength = 80/60*1000;
+        # 60 seconds / tempo (beats per minute)
+        self.quarterNoteLength = 60/80*1000;
 
     # Reads all of the files in the midi_files directory
     def get_midi_files(self, mypath):
