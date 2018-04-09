@@ -34,7 +34,7 @@ class Conductor:
         # The list of midi filenames
         self.midi_files = self.get_midi_files(self.midi_file_path)
 
-        # Topic format = orchestra/theatre/channel
+        # Topic format = orchestra/theatre/default
         # orchestra - constant
         # theatre - the "room" that the song is played in. Default value is 'default'
         # channel - the "instument being played"
@@ -109,7 +109,7 @@ class Conductor:
         for msg in self.selected_song_midi.play():
             if msg.type == "note_on":
                 channel_number = msg.channel
-                topic = "orchestra/" + self.theatre + '/' + str(channel_number)
+                topic = "orchestra/theatre/" + self.theatre
                 unique_notes = self.channels[channel_number]['unique']
                 print(str(msg.channel) + ": " + self.notes[msg.note % 12])
 
