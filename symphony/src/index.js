@@ -1,8 +1,8 @@
-import env from '../environment/env'
+import env from '../../common/env'
 import mqtt from'mqtt';
 
-const Instruments = require('webaudio-instruments')
-const player = new Instruments()
+const Instruments = require('webaudio-instruments');
+const player = new Instruments();
 
 const client  = mqtt.connect(env.broker.url, {
     username: env.broker.username,
@@ -12,7 +12,7 @@ const client  = mqtt.connect(env.broker.url, {
 const noteTranslator = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
 client.on('message', function (topic, message) {
-    let contents = JSON.parse(message.toString());
+    let contents = JSON.parse(message.toString()).note_list[0];
 
     player.play(
         contents.program,        // instrument: 24 is "Acoustic Guitar (nylon)"
