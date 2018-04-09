@@ -1,5 +1,10 @@
 // Amount of time it takes the slider to slide down the track
 var sliderTimeSecs = 1.5;
+var publisher = {};
+
+// Midi note to play when the button is pressed for a track
+// Track is the offset, note is the value;
+var noteArray = [60, 62, 64, 65, 67, 69, 71];
 
 function initializeMessaging(msgHandler) {
 
@@ -7,7 +12,7 @@ function initializeMessaging(msgHandler) {
   factoryProps.profile = solace.SolclientFactoryProfiles.version10;
   solace.SolclientFactory.init(factoryProps);
 
-  var topic = "/orchestra/default/0";
+  var topic = "orchestra/theatre/default";
 
   // create session
   var session = solace.SolclientFactory.createSession({
@@ -27,7 +32,7 @@ function initializeMessaging(msgHandler) {
   session.on(solace.SessionEventCode.UP_NOTICE, function (sessionEvent) {
     console.log('Connected');
     session.subscribe(
-      solace.SolclientFactory.createTopicDestination("orchestra/default/0"),
+      solace.SolclientFactory.createTopicDestination(topic),
       true, // generate confirmation when subscription is added successfully
       "orchestra/default/0", // use topic name as correlation key
       10000 // 10 seconds timeout for this operation
@@ -76,19 +81,31 @@ function setup() {
 }
 
 function mainLoop() {
+
+  // Initialize the subscriber
   initializeMessaging(addTimedSlider);
+
+  // Initialize the publisher
+  publisher = TopicPublisher("orchestra/theatre/default/note");
+  publisher.connect(); 
+  
+  // Start the demo
   addDemoSliders();
 }
 
 function addTimedSlider(message) {
-  var timeoutSeconds = message.play_time - message.current_time - sliderTimeSecs;
-  if (timeoutSeconds < 1.5) {
-    timeoutSeconds = 1.5;
-  }
+  if (message.hasOwnProperty('note_list')) {
+    message.note_list.forEach(function (noteMessage) {
+      var timeoutSeconds = noteMessage.play_time - noteMessage.current_time - sliderTimeSecs;
+      if (timeoutSeconds < 1.5) {
+        timeoutSeconds = 1.5;
+      }
 
-  setTimeout(function() {
-    addSlider(message.id, message.track);
-  }, timeoutSeconds * 1000);   
+      setTimeout(function () {
+        addSlider(noteMessage.id, noteMessage.track, noteMessage);
+      }, timeoutSeconds * 1000);
+    });
+  }
 }
 
 function addDemoSlider(id, track, timeout) {
@@ -97,11 +114,12 @@ function addDemoSlider(id, track, timeout) {
   }, timeout);   
 }
 
-function buildSlider(id, track) {
+function buildSlider(id, track, message) {
   var slider = {};
   slider.element = document.createElement("div");
   slider.track = track;
   slider.id = id;
+  slider.message = message;
   slider.element.className +=
     "slider slider-anim-" + track + " track" + track + " shape color" + track;
 
@@ -109,9 +127,9 @@ function buildSlider(id, track) {
   return slider;
 }
 
-function addSlider(id, track) {
+function addSlider(id, track, message) {
   var sliders = document.getElementById("sliders");
-  var slider = buildSlider(id, track);
+  var slider = buildSlider(id, parseInt(track), message);
   sliders.appendChild(slider.element);
 
   allSliders.push(slider);
@@ -142,20 +160,48 @@ function buttonPress(track) {
     }).indexOf(track);
   var slider = allSliders[index];
 
+  var currentTime = Date.now();
+
   if (slider != null) {
     slider.pressed = true;
-    var currentTime = Date.now();
 
+    var timeOffset = 0;
     if (slider.removeTime != null) {
+      timeOffset = currentTime - slider.removeTime
       console.log("Too late by", currentTime - slider.removeTime);
     } else {
+      timeOffset = -((slider.addTime + (sliderTimeSecs * 1000)) - currentTime);
       console.log("Too early by", (slider.addTime + (sliderTimeSecs * 1000)) - currentTime);
     }
 
+    // Send the message
+    if (slider.message != null) {
+      var noteMsg = {
+        'noteId': slider.message.noteId,
+        'time_offset': timeOffset
+      };
+      publisher.publish(noteMsg);
+    }
+
   } else {
+
+    // There is no note attached to the button press
+    // This is a spontaneous note
     console.log("No slider!!");
+
+    // Generate a note based on which button is pressed
+    var spontaneousNote = {
+      'program': 0,
+      'track': 0,
+      'note': noteArray[track - 1],
+      'channel': 0,
+      'duration': 750,
+      'current_time': currentTime,
+      'play_time': currentTime
+    };
+
+    publisher.publish(JSON.stringify(spontaneousNote));
   }
-  //console.log(slider, currentTime);
 }
 
 window.onload = setup;
