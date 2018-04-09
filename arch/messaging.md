@@ -186,6 +186,7 @@ The message format for this is:
   * **note_id** - id for the note, unique for the whole song
   * **play_time** - time in future when this note should be played
   * **note** - the midi note number
+  * **channel** - the midi channel the note is played on (ie, the midi instrument)
   * **track** - the track on the game controller that the note will be placed on (1..7)
   * **duration** - length in time of note (This is needed by the symphony to play the note for the
     right length, but could also be used on the game controller to show a longer sound...)
