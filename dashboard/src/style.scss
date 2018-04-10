@@ -1,3 +1,6 @@
+$fa-font-path: "~font-awesome/fonts";
+@import '~font-awesome/scss/font-awesome.scss';
+
 html, body {
   overflow-y:hidden;
   height:100%;
@@ -10,6 +13,18 @@ body {
 
 th {
     text-align: left;
+}
+
+.rtt-fast {
+    color: darkgreen;
+}
+
+.rtt-medium {
+    color: darkorange;
+}
+
+.rtt-slow {
+    color: darkred;
 }
 
 .header {
@@ -98,4 +113,32 @@ th {
     height: 15vh;
 }
 
+.song-action-button {
+    cursor: pointer;
+}
+
+.song-action-button:hover {
+    color: blue;
+}
+
+.song-action-inactive {
+    cursor:  default;
+    opacity: 0.5;
+}
+
+.song-action-inactive:hover {
+    color: black;
+}
+
+.row-state-idle {
+    background-color: white;
+}
+
+.row-state-waiting {
+    background-color: #ffa;
+}
+
+.row-state-ready {
+    background-color: #afa;
+}
 

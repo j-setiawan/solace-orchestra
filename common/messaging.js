@@ -58,12 +58,13 @@ export default class Messaging {
   //   * On timeout, it will call the timeout with the received response set
   //     to {status: 'timeout'}
   //
-  sendMessage(topic, message, callback, timeout) {
-    message.client_id    = this.myId;
-    message.current_time = (new Date()).getTime();
+  sendMessage(topic, message, callback, timeout, retries) {
+    let txMsg = Object.assign({}, message);
+    txMsg.client_id    = this.myId;
+    txMsg.current_time = (new Date()).getTime();
 
-    if (!message.msg_id) {
-      message.msg_id = this.msgId++;
+    if (!txMsg.msg_id) {
+      txMsg.msg_id = this.msgId++;
     }
     
     if (!this.isConnected) {
@@ -75,19 +76,27 @@ export default class Messaging {
       if (!timeout) {
         timeout = 5000;
       }
-      this.pendingReplies[message.msg_id] = {
-        txMessage: message,
+      this.pendingReplies[txMsg.msg_id] = {
+        txMessage: txMsg,
         callback:  callback,
+        retries:   retries,
         timer:     setTimeout(() => {
-          delete this.pendingReplies[message.msg_id];
-          callback(message, {status: "timeout"});
+          if (this.pendingReplies[txMsg.msg_id].retries) {
+            this.client.publish(topic,
+                                JSON.stringify(txMsg));
+            this.pendingReplies[txMsg.msg_id].retries--;
+          }
+          else {
+            delete this.pendingReplies[txMsg.msg_id];
+            callback(message, {status: "timeout"});
+          }
         }, timeout)
       };
     }
 
     // console.log("Publishing:", topic, message);
     this.client.publish(topic,
-                        JSON.stringify(message));
+                        JSON.stringify(txMsg));
 
   }
 
@@ -96,6 +105,11 @@ export default class Messaging {
     return this.isConnected;
   }
 
+  getTime() {
+    // TODO: Fill in syched time offset here
+    return (new Date()).getTime();
+  }
+  
   
   // Private methods
 
@@ -138,6 +152,7 @@ export default class Messaging {
     if (!msgId) {
       console.warn("Received message is missing msg_id");
     }
+    // console.log("Got message: ", message);
     
     // Auto resend pings
     if (msgType === "ping") {

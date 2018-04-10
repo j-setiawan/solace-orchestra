@@ -5,7 +5,8 @@ import templates from './templates';
 import mqtt      from "mqtt";
 import $         from 'jquery';
 
-import './style.css';
+import './style.scss';
+
 
 class Dashboard {
 
@@ -19,51 +20,37 @@ class Dashboard {
     this.musicianMap  = {};
     this.symphonyMap  = {};
 
+    this.theatreId       = 1;
+    this.startTimeOffset = 10000;
+
+    this.pingTime        = 2000;
+    
     this.testSeqNum   = 0;
     
     this.messaging = new Messaging(
       mqtt,
       {
         callbacks: {
-          connected: (...args) => {
-            this.connected.apply(this, args);
-          },
-          register: (...args) => {
-            this.register.apply(this, args);
-          },
-          start_song: (...args) => {
-            this.startSong.apply(this, args);
-          },
-          stop_song: (...args) => {
-            this.stopSong.apply(this, args);
-          },
-          complete_song: (...args) => {
-            this.completeSong.apply(this, args);
-          },
-          score_update: (...args) => {
-            this.scoreUpdate.apply(this, args);
-          }
+          connected:     (...args) => this.connected(...args),
+          register:      (...args) => this.register(...args),
+          start_song:    (...args) => this.startSong(...args),
+          stop_song:     (...args) => this.stopSong(...args),
+          complete_song: (...args) => this.completeSong(...args),
+          score_update:  (...args) => this.scoreUpdate(...args)
         }
       }
     );
 
+    // Temporary buttons...
+    this.buttons = [
+      {title: "Add Conductor", listener: e => {this.addConductor(e);}},
+      {title: "Add Musician",  listener: e => {this.addMusician(e);}},
+      {title: "Add Symphony",  listener: e => {this.addSymphony(e);}},
+      {title: "Clear",         listener: e => {this.clearButton(e);}}
+    ];
+
     // Fill in all the HTML from the templates
     jst("body").appendChild(jst.stamp("dashboard", templates.page, this));
-    $(".add-conductor").on("click", e => {
-      this.addConductor();
-    });
-    $(".add-musician").on("click", e => {
-      this.addMusician();
-    });
-    $(".add-symphony").on("click", e => {
-      this.addSymphony();
-    });
-    $(".inc-button").on("click", e => {
-      this.incButton();
-    });
-    $(".clear-button").on("click", e => {
-      this.clearButton();
-    });
     
   }
 
@@ -118,9 +105,16 @@ class Dashboard {
       }
 
       for (let song of message.song_list) {
-        let newSong = Object.assign({conductor_name: message.name,
-                                     numChannels: song.song_channels.length},
-                                    song);
+        let newSong = Object.assign(
+          {
+            conductor_name: message.name,
+            numChannels:    song.song_channels.length
+          },
+          song);
+        
+        newSong.action = () => templates.songAction(this, newSong);
+        newSong.events = {click: e => this.songActionClicked(newSong)};
+        
         newSongs.push(newSong);
       }
 
@@ -182,6 +176,7 @@ class Dashboard {
 
     componentAdded.component_type = message.component_type;
     componentAdded.client_id      = message.client_id;
+    componentAdded.state          = "idle";
     
     this.addPinger(message, componentAdded);
     
@@ -196,7 +191,7 @@ class Dashboard {
                                  (txMessage, rxMessage) => {
                                    this.handlePingResponse(component, txMessage, rxMessage);
                                  }, 1900);
-    }, 2000);
+    }, this.pingTime);
     
   }
 
@@ -213,7 +208,11 @@ class Dashboard {
     
     component.latency = latency;
     jst.update(component.component_type);
-    
+  }
+  
+  handleStartSongResponse(component, txMessage, rxMessage) {
+    component.state = "ready";
+    jst.update(component.component_type);
   }
   
   startSong(topic, message) {
@@ -237,6 +236,7 @@ class Dashboard {
   // Temp testing stuff
   //
   addConductor() {
+    console.log("Click");
     let songs = [];
     for (let i = 0; i < 10; i++) {
       songs.push(this.makeSong());
@@ -287,15 +287,6 @@ class Dashboard {
     this.messaging.sendMessage("orchestra/registration", msg);
   }
 
-  incButton() {
-    setInterval(() => {
-      if (this.musicians[0]) {
-        this.musicians[0].hits++;
-        jst.update("musician");
-      }
-    }, 100);
-  }
-
   clearButton() {
     this.conductors = [];
     this.songs      = [];
@@ -307,6 +298,88 @@ class Dashboard {
     this.symphonyMap  = {};
 
     jst.update("dashboard");
+  }
+
+  songActionClicked(song) {
+    if (song.isPlaying) {
+      song.isPlaying = false;
+      this.sendStopSongMessage();
+      this.setAllComponentState("idle");
+      delete this.currentSong;
+    }
+    else if (this.currentSong) {
+      // Do nothing - must stop current song first
+    }
+    else {
+      this.currentSong   = song;
+      song.isPlaying     = true;
+      this.sendStartSongMessage(song);
+    }
+    jst.update("song");
+  }
+
+  setAllComponentState(state) {
+    this.conductors.map(component => component.state = "idle");
+    this.musicians.map(component => component.state = "idle");
+    this.symphonies.map(component => component.state = "idle");
+
+    jst.update("conductor");
+    jst.update("musician");
+    jst.update("symphony");
+  }
+
+  sendStartSongMessage(song) {
+    // Send the message out to all registered components
+    let msg = {
+      msg_type:       "start_song",
+      song_id:        this.currentSong.song_id,
+      song_name:      this.currentSong.song_name,
+      song_length:    this.currentSong.song_name,
+      theatre_id:     this.theatreId,
+      start_time:     this.messaging.getTime() + this.startTimeOffset
+    };
+
+    // Send to the specific conductor
+    let conductor   = this.conductorMap[song.conductor_name];
+    conductor.state = "waiting";
+    this.messaging.sendMessage(`orchestra/p2p/${conductor.client_id}`,
+                               msg,
+                               (txMessage, rxMessage) => {
+                                 this.handleStartSongResponse(conductor, txMessage, rxMessage);
+                               }, 2000, 4);
+    
+    for (let component of this.symphonies) {
+      component.state = "waiting";
+      this.messaging.sendMessage(`orchestra/p2p/${component.client_id}`,
+                                 msg,
+                                 (txMessage, rxMessage) => {
+                                   this.handleStartSongResponse(component, component, rxMessage);
+                                 }, 2000, 4);
+    }
+
+    let channelId = 0;
+    for (let component of this.musicians) {
+      component.state = "waiting";
+      msg.channel_id = channelId++;
+      this.messaging.sendMessage(`orchestra/p2p/${component.client_id}`,
+                                 msg,
+                                 (txMessage, rxMessage) => {
+                                   this.handleStartSongResponse(component, component, rxMessage);
+                                 }, 2000, 4);
+      if (channelId > song.numChannels) {
+        channelId = 0;
+      }
+    }
+    
+  }
+
+  sendStopSongMessage() {
+    let msg = {
+      msg_type:       "stop_song",
+      song_id:        this.currentSong.song_id,
+      song_name:      this.currentSong.song_name
+    };
+    this.messaging.sendMessage("orchestra/theatre/${this.theatreId}", msg);
   }
 
 }

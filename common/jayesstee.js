@@ -22,6 +22,7 @@ class JstElement {
     this.contents = [];
     this.attrs    = {};
     this.props    = [];
+    this.events   = {};
     this.stamps   = {};
 
     if (tag instanceof HTMLElement) {
@@ -130,6 +131,11 @@ class JstElement {
       }
       for (let propName of this.props) {
         el[propName] = true;
+      }
+      for (let event of Object.keys(this.events)) {
+        // TODO: Add support for options - note that this will require
+        //       some detection of options support in the browser...
+        el.addEventListener(event, this.events[event].listener);
       }
     }
 
@@ -270,7 +276,7 @@ class JstElement {
     let newJst = new JstElement("div");
     newJst._processParams([items], stamp.getName());
 
-    this._compareAndCopy(newJst, stamp.getName());
+    this._compareAndCopy(newJst, true, stamp.getName());
 
     // If we were already domified, then redo it for the new elements
     if (this.isDomified) {
@@ -278,10 +284,99 @@ class JstElement {
     }
   }
 
-  _compareAndCopy(newJst, stampName) {
+  // Returns true if upper layer needs to copy new Jst. False otherwise
+  _compareAndCopy(newJst, topNode, stampName) {
     let oldIndex = 0;
     let newIndex = 0;
 
+    // First check the attributes, props and events
+    // But only if we aren't the topNode
+    if (!topNode) {
+      if (this.tag !== newJst.tag) {
+        return true;
+      }
+
+      // Just fix all the attributes inline
+      for (let attrName of Object.keys(this.attrs)) {
+        if (!newJst.attrs[attrName]) {
+          delete this.attrs[attrName];
+          if (this.isDomified) {
+            this.el.removeAttribute(attrName);
+          }
+        }
+        else if (newJst.attrs[attrName] !== this.attrs[attrName]) {
+          this.attrs[attrName] = newJst.attrs[attrName];
+          if (this.isDomified) {
+            this.el.setAttribute(attrName, newJst.attrs[attrName]);
+          }
+        }
+      }
+      for (let attrName of Object.keys(newJst.attrs)) {
+        if (!this.attrs[attrName]) {
+          this.attrs[attrName] = newJst.attrs[attrName];
+          if (this.isDomified) {
+            this.el.setAttribute(attrName, newJst.attrs[attrName]);
+          }
+        }
+      }
+
+      if (this.props.length || newJst.props.length) {
+        let fixProps = false;
+        
+        // Just compare them in order - if they happen to be the same,
+        // but in a different order, we will do a bit more work than necessary
+        // but it should be very unlikely that that would happen
+        if (this.props.length != newJst.props.length) {
+          fixProps = true;
+        }
+        else {
+          for (let i = 0; i < this.props.length; i++) {
+            if (this.props[i] !== newJst.props[i]) {
+              fixProps = true;
+              break;
+            }
+          }
+        }
+        
+        if (fixProps) {
+          if (this.isDomified) {
+            for (let prop of this.props) {
+              delete this.el[prop];
+            }
+            for (let prop of newJst.props) {
+              this.el[prop] = true;
+            }
+          }
+          this.props = newJst.props;
+        }
+      }
+      
+      // Fix all the events
+      for (let eventName of Object.keys(this.events)) {
+        if (!newJst.events[eventName]) {
+          delete this.events[eventName];
+          if (this.isDomified) {
+            this.el.removeEventListener(eventName, this.events[eventName].listener);
+          }
+        }
+        else if (newJst.events[eventName].listener !== this.events[eventName].listener) {
+          this.events[eventName] = newJst.events[eventName];
+          if (this.isDomified) {
+            this.el.removeEventListener(eventName, this.events[eventName].listener);
+            this.el.addEventListener(eventName, newJst.events[eventName].listener);
+          }
+        }
+      }
+      for (let eventName of Object.keys(newJst.events)) {
+        if (!this.events[eventName]) {
+          this.events[eventName] = newJst.events[eventName];
+          if (this.isDomified) {
+            this.el.addEventListener(eventName, newJst.events[eventName].listener);
+          }
+        }
+      }
+    }
+    
     while (true) {
       let oldItem = this.contents[oldIndex];
       let newItem = newJst.contents[newIndex];
@@ -300,11 +395,11 @@ class JstElement {
       }
 
       if (oldItem.type === "jst") {
-        if (oldItem.value.tag !== newItem.value.tag) {
+        // If the tags are the same, then we must descend and compare
+        let doReplace = oldItem.value._compareAndCopy(newItem.value, false);
+        if (doReplace) {
           break;
         }
-        // If the tags are the same, then we must descend and compare
-        oldItem.value._compareAndCopy(newItem.value);
       }
       else if (oldItem.type === "textnode" && oldItem.value !== newItem.value) {
         if (oldItem.el) {
@@ -337,6 +432,9 @@ class JstElement {
       let newItems = newJst.contents.splice(newIndex, newJst.contents.length - newIndex);
       this.contents.splice(oldStartIndex, 0, ...newItems);
     }
+
+    return false;
+    
   }
 
   _deleteItem(contentsItem) {
@@ -393,8 +491,25 @@ class JstElement {
               this.props.push(prop);
             }
           }
+          else if (name === "events" && typeof param.events === "object") {
+            for (let event of Object.keys(param.events)) {
+              if (param.events[event] instanceof Function) {
+                this.events[event] = {listener: param.events[event]};
+              }
+              else {
+                this.events[event] = param.events[event];
+              }
+            }
+          }
           else if (name === "cn") {
-            this.attrs['class'] = param[name];
+            // A bit of magic for the "class" attribute: cn -> class
+            // We also will append to the class if there already is one
+            if (this.attrs['class']) {
+              this.attrs['class'] += " " + param[name];
+            }
+            else {
+              this.attrs['class'] = param[name];
+            }
           }
           else {
             this.attrs[name] = param[name];

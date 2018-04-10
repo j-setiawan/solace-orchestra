@@ -14,9 +14,14 @@ let formatters = {
     return date.toISOString().substr(11, 8);
   },
 
-  addMs: (value) => {
+  formatLatency: (value) => {
     value = value || 0;
-    return `${value} ms`;
+    let cn =
+        value < 20 ? "rtt-fast" :
+        value < 50 ? "rtt-medium" :
+        "rtt-slow";
+    return [{cn: `rtt-${value < 30 ? "fast" : value < 100 ? "medium" : "slow"}`},
+            `${value} ms`];
   }
 
 };
@@ -73,7 +78,7 @@ export default templates = {
                                         fields: [
                                           {title: "Name", name: "name"},
                                           {title: "# Songs", name: "numSongs"},
-                                          {title: "RTT", name: "latency", format: formatters.addMs},
+                                          {title: "RTT", name: "latency", format: formatters.formatLatency},
                                         ],
                                         model: data.conductors
                                       })
@@ -82,6 +87,7 @@ export default templates = {
   songBody: (opts, data) => $div({cn: 'pane-body'},
                                  templates.table({
                                    fields: [
+                                     {title: "", name: "action"},
                                      {title: "Name", name: "song_name"},
                                      {title: "Length", name: "song_length", format: formatters.secsToTime},
                                      {title: "# Channels", name: "numChannels"},
@@ -94,7 +100,7 @@ export default templates = {
                                  templates.table({
                                    fields: [
                                      {title: "Name", name: "name"},
-                                     {title: "RTT", name: "latency", format: formatters.addMs},
+                                     {title: "RTT", name: "latency", format: formatters.formatLatency},
                                    ],
                                    model: data.symphonies
                                  })
@@ -105,11 +111,10 @@ export default templates = {
                                   ),
 
   buttonBody: (opts, data) => $div({cn: 'pane-body'},
-                                   $button({cn: "add-conductor"}, "Add Conductor"),
-                                   $button({cn: "add-musician"},  "Add Musician"),
-                                   $button({cn: "add-symphony"},  "Add Symphony"),
-                                   $button({cn: "inc-button"},    "Increment"),
-                                   $button({cn: "clear-button"},  "Clear")
+                                   data.buttons.map(
+                                     button => 
+                                       $button({events: {click: button}}, button.title)
+                                   )
                                   ),
 
   musicianBody: (opts, data) => $div({cn: 'pane-body'},
@@ -119,7 +124,7 @@ export default templates = {
                                        {title: "Hits", name: "hits"},
                                        {title: "Misses", name: "misses"},
                                        {title: "%", name: "percent"},
-                                       {title: "RTT", name: "latency", format: formatters.addMs},
+                                       {title: "RTT", name: "latency", format: formatters.formatLatency},
                                      ],
                                      model: data.musicians
                                    })
@@ -133,14 +138,23 @@ export default templates = {
                           ),
                           $tbody(
                             opts.model.map(
-                              row => $tr(
-                                opts.fields.map(field => $td({cn: `td-${field.name}`},
-                                                             field.format ?
-                                                             field.format(row[field.name], row) :
-                                                             row[field.name]))
+                              row => $tr(row.state ? {cn: `row-state-${row.state}`} : undefined,
+                                         opts.fields.map(field => $td({cn: `td-${field.name}`},
+                                                                      field.format ?
+                                                                      field.format(row[field.name], row) :
+                                                                      row[field.name]))
                               )
                             )
                           )
                          ),
+
+  songAction: (data, song) => $i({events: song.events,
+                                  cn: "song-action-button fa " +
+                                  (typeof data.currentSong !== "undefined" ?
+                                   data.currentSong.song_id === song.song_id ?
+                                   "fa-stop-circle" :
+                                   "fa-play-circle song-action-inactive" :
+                                   "fa-play-circle")
+                                 }),
 
 };
