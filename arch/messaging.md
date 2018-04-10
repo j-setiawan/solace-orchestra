@@ -151,7 +151,7 @@ The topic for these messages is: orchestra/p2p/\<client_id>
 Stop song messages are sent by the dashboard to all components participating in a theatre. When recieved all
 components must immediately stop the current song.
 
-The topic for these messages is: orchestra/broadcast
+The topic for these messages is: orchestra/theatre/<theatre_id>
 
 No reply is sent by the receiving components.
 
