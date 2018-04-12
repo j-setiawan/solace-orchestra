@@ -190,15 +190,15 @@ function buttonPress(track) {
     console.log("No slider!!");
 
     // Generate a note based on which button is pressed
-    var spontaneousNote = {
+    var spontaneousNote = { "note_list": [{
       'program': 0,
-      'track': 0,
+      'track': track,
       'note': noteArray[track - 1],
       'channel': 0,
       'duration': 750,
       'current_time': currentTime,
       'play_time': currentTime
-    };
+    }]};
 
     publisher.publish(JSON.stringify(spontaneousNote));
   }

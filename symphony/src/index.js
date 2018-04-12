@@ -28,7 +28,7 @@ client.on('message', function (topic, message) {
 
 client.on('connect', function () {
     console.log('Connected');
-    client.subscribe("orchestra/default/+");
+    client.subscribe("orchestra/theatre/default");
 });
 
 const allSliders = [];
