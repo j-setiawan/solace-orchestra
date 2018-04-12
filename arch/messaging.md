@@ -178,7 +178,7 @@ This message is used by the conductor to issue one or more notes that will be pl
 These messages are sent on individual channels. Each musician should be subscribed to a single channel,
 while the symphony would subscribe to all channels (using a wildcard in the subscription).
 
-This message is sent to the topic: orchestra/theatre/\<theatre_id>
+This message is sent to the topic: orchestra/theatre/\<theatre_id>/\<channel_id>
 
 The message format for this is:
 
