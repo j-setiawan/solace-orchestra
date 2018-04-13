@@ -5,7 +5,7 @@ import time
 
 from solace.client import SolaceMQTTClient
 
-from os import listdir, getcwd
+from os import listdir, getcwd, getpid
 from os.path import isfile, join
 
 import json
@@ -40,8 +40,15 @@ class Conductor:
         # channel - the "instument being played"
         self.theatre = 'default'
 
+        # Redirect for callbacks
+        def onConnect():
+            self.onConnect()
+
+        def onRxMessage():
+            self.onRxMessage()
+        
         # Create and initialize solace messaging client
-        self.solace = SolaceMQTTClient()
+        self.solace = SolaceMQTTClient({'onConnect': onConnect, 'onRxMessage': onRxMessage})
 
         # Unique id assigned to each message (note)
         self.unique_id = 0

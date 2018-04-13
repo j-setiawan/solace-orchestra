@@ -23,7 +23,7 @@ class Dashboard {
     this.theatreId       = 1;
     this.startTimeOffset = 10000;
 
-    this.pingTime        = 2000;
+    this.pingTime        = 200;
     
     this.testSeqNum   = 0;
     
@@ -191,7 +191,7 @@ class Dashboard {
                                  (txMessage, rxMessage) => {
                                    this.handlePingResponse(component, txMessage, rxMessage);
                                  }, 1900);
-    }, this.pingTime);
+    }, this.pingTime); 
     
   }
 
