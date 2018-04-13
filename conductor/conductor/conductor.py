@@ -22,7 +22,7 @@ class Conductor:
 
     def __init__(self):
         
-        self.channel_instrument = []
+        self.channel_instrument = {}
 
         # The conversion of MIDI notes is based on this: 
         # https://www.midikits.net/midi_analyser/midi_note_numbers_for_octaves.htm
@@ -98,18 +98,19 @@ class Conductor:
                 unique_notes = get_unique_notes_in_channel(notes_in_channel)
                 self.channels[channel_number]['unique'] = unique_notes
 
-                program_change = next((m for m in channel if m.type == 'program_change'), None)
+                program_change = next((m for m in channel if m.type == 'program_change'), 0)
+                self.channel_instrument[channel_number] = program_change.program
 
-                if program_change:
-                    self.channel_instrument.insert(channel_number, program_change.program)
-                else:
-                    self.channel_instrument.insert(channel_number, 0)
+    def send_meta(self):
+        self.solace.publish("orchestra/theatre/" + self.theatre + "/meta", json.dumps({
+            'channels': [*self.channels.keys()]
+        }))
 
     def play_song(self):
         for msg in self.selected_song_midi.play():
             if msg.type == "note_on":
                 channel_number = msg.channel
-                topic = "orchestra/theatre/" + self.theatre
+                topic = "orchestra/theatre/" + self.theatre + "/" + str(channel_number)
                 unique_notes = self.channels[channel_number]['unique']
                 print(str(msg.channel) + ": " + self.notes[msg.note % 12])
 
@@ -144,4 +145,5 @@ class Conductor:
 
 conductor = Conductor()
 conductor.select_song(1)
+conductor.send_meta()
 conductor.play_song()

@@ -12,23 +12,32 @@ const client  = mqtt.connect(env.broker.url, {
 });
 
 client.on('message', function (topic, message) {
-    let contents = JSON.parse(message.toString()).note_list[0];
-    let delay = (contents.play_time - contents.current_time) * 1000 + (sliderTimeSecs * 1000);
+    let contents = JSON.parse(message.toString());
 
-    addTimedSlider(contents);
+    if (contents.note_list) {
+        for (let note of contents.note_list) {
+            let delay = (note.play_time - note.current_time) * 1000 + (sliderTimeSecs * 1000);
 
-    setTimeout(function() { return player.play(
-        contents.program,   // instrument: 24 is "Acoustic Guitar (nylon)"
-        contents.note,      // note: midi number or frequency in Hz (if > 127)
-        0.5,                // velocity: 0..1
-        0,                  // delay in seconds
-        0.5,                // duration in seconds
-    )}, delay);
+            addTimedSlider(note);
+
+            setTimeout(function () {
+                return player.play(
+                    note.program,   // instrument: 24 is "Acoustic Guitar (nylon)"
+                    note.note,      // note: midi number or frequency in Hz (if > 127)
+                    0.5,            // velocity: 0..1
+                    0,              // delay in seconds
+                    0.5,            // duration in seconds
+                )
+            }, delay);
+        }
+    } else {
+        buildTracks(contents.channels);
+    }
 });
 
 client.on('connect', function () {
     console.log('Connected');
-    client.subscribe("orchestra/theatre/default");
+    client.subscribe("orchestra/theatre/default/+");
 });
 
 const allSliders = [];
@@ -45,13 +54,19 @@ function addTimedSlider(message) {
 }
 
 const colours = ['#0074d9', '#d83439', '#38b439', '#e9cd54', '#811ed1', '#e66224', '#e041ab'];
-const trackPositions = {};
+let trackPositions = {};
 
 const line_spacing = 20;
-buildTracks([0, 1, 2, 3]);
+buildTracks([0]);
 
 function buildTracks(channel_list) {
+    trackPositions = {};
+
     let lines = document.getElementById("lines");
+
+    while (lines.firstChild) {
+        lines.removeChild(lines.firstChild);
+    }
 
     let trackPos = 274;
     let linePos = 280;
@@ -84,7 +99,6 @@ function buildSlider(id, channel, track) {
     slider.track = track;
     slider.id = id;
     slider.element.style.position = "absolute";
-    console.log("Channel: " + channel + "  Track: " + track);
     slider.element.style.top = trackPositions[channel][Number(track) - 1];
     slider.element.className +=
         "slider slider-anim-" + track + " shape colour" + track;
@@ -114,11 +128,11 @@ function addSlider(id, channel, track) {
     }, sliderTimeSecs * 1000 + 200);
 }
 
-let demoId = 0;
-
-for (let channel of [0, 1, 2, 3]) {
-    for (let index of colours.keys()) {
-        addSlider(demoId, channel, index + 1);
-        demoId ++;
-    }
-}
+// let demoId = 0;
+//
+// for (let channel of [0, 1, 2, 3]) {
+//     for (let index of colours.keys()) {
+//         addSlider(demoId, channel, index + 1);
+//         demoId ++;
+//     }
+// }
