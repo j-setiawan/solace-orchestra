@@ -1,15 +1,13 @@
 @mixin slide-keyframes($number, $colour) {
   @keyframes slide-anim#{$number} {
     0% { margin-left: 10px;}
-    92% { background-color: #{$colour};
-      margin-left: 267px;}
-    93% {
-      background-color: #ffffff;
-      margin-left: 270px;
+    95% {
+      background-color: #{$colour};
+      margin-left: 390px;
     }
     100% {
       background-color: #ffffff;
-      margin-left: 300px;
+      margin-left: 400px;
     }
   }
 }
@@ -23,35 +21,40 @@
   }
 }
 
-$colors: #0074d9, #d83439, #38b439, #e9cd54, #811ed1, #e66224, #e041ab;
+$colours:
+        #0074d9,
+        #d83439,
+        #38b439,
+        #e9cd54,
+        #811ed1,
+        #e66224,
+        #e041ab;
 
-@for $i from 1 through length($colors) {
+@for $i from 1 through length($colours) {
   @include slider($i);
-  @include slide-keyframes($i, nth($colors, $i));
-  .color#{$i} { background-color: nth($colors, $i); }
+  @include slide-keyframes($i, nth($colours, $i));
+  .colour#{$i} { background-color: nth($colours, $i); }
 }
 
 .slider {
-  height: 20px;
-  width: 20px;
+  height: 15px;
+  width: 15px;
   border-radius: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   display: inline-block;
-  box-shadow: 10px -5px #0e254b;
 }
 
 .line {
   position: absolute;
   left: 10px;
-  width: 300px;
+  width: 400px;
   height: 0px;
   border: 2px solid #999999;
   z-index: -1;
-  box-shadow: 10px -5px #0e254b;
 }
 
 .shape {
-  margin-bottom: 30px;
+  margin-bottom: 10px;
 }
 
 .outermost {
