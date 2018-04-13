@@ -10,3 +10,4 @@ env/
 *.pyc
 npm-debug.log
 **/dist
+yarn-error.log

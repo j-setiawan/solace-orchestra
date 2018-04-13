@@ -23,12 +23,14 @@
   "homepage": "",
   "dependencies": {
     "mqtt": "^2.17.0",
+    "node-sass": "^4.8.3",
+    "sass-loader": "^6.0.7",
     "webaudio-instruments": "^0.4.1",
     "webpack": "^4.1.1",
     "webpack-cli": "^2.0.11"
   },
   "devDependencies": {
-    "css-loader": "^0.28.10",
+    "css-loader": "^0.28.11",
     "file-loader": "^1.1.11",
     "html-webpack-plugin": "^3.0.6",
     "style-loader": "^0.20.3"

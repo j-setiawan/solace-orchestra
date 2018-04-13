@@ -1,6 +1,6 @@
 import env from '../../common/env'
 import mqtt from'mqtt';
-import './index.css';
+import './index.scss';
 
 const sliderTimeSecs = 1.5;
 const Instruments = require('webaudio-instruments');

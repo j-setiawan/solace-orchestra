@@ -1,0 +1,137 @@
+@mixin slide-keyframes($number, $colour) {
+  @keyframes slide-anim#{$number} {
+    0% { margin-left: 10px;}
+    92% { background-color: #{$colour};
+      margin-left: 267px;}
+    93% {
+      background-color: #ffffff;
+      margin-left: 270px;
+    }
+    100% {
+      background-color: #ffffff;
+      margin-left: 300px;
+    }
+  }
+}
+
+@mixin slider($number) {
+  .slider-anim-#{$number} {
+    animation-name: slide-anim#{$number};
+    animation-duration: 1.5s;
+    animation-iteration-count: 1;
+    animation-timing-function: linear;
+  }
+}
+
+@mixin track($number) {
+  .track#{$number} {
+    position: absolute;
+    top: (273px - ($number * 40px))
+  }
+}
+
+@mixin line($number) {
+  .line#{$number} {
+    top: (280px - ($number * 40px))
+  }
+}
+
+@include track(1)
+@include track(2)
+@include track(3)
+@include track(4)
+@include track(5)
+@include track(6)
+@include track(7)
+
+@include line(1)
+@include line(2)
+@include line(3)
+@include line(4)
+@include line(5)
+@include line(6)
+@include line(7)
+
+@include slide-keyframes(1, #0074d9)
+@include slide-keyframes(2, #d83439)
+@include slide-keyframes(3, #38b439)
+@include slide-keyframes(4, #e9cd54)
+@include slide-keyframes(5, #811ed1)
+@include slide-keyframes(6, #e66224)
+@include slide-keyframes(7, #e041ab)
+
+@include slider(1)
+@include slider(2)
+@include slider(3)
+@include slider(4)
+@include slider(5)
+@include slider(6)
+@include slider(7)
+
+.slider {
+  height: 20px;
+  width: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  display: inline-block;
+  box-shadow: 10px -5px #0e254b;
+}
+
+.line {
+  position: absolute;
+  left: 10px;
+  width: 300px;
+  height: 0px;
+  border: 2px solid #999999;
+  z-index: -1;
+  box-shadow: 10px -5px #0e254b;
+}
+
+.color1 {
+  background-color: #0074d9;
+}
+
+.color2 {
+  background-color: #d83439;
+}
+
+.color3 {
+  background-color: #38b439;
+}
+
+.color4 {
+  background-color: #e9cd54;
+}
+
+.color5 {
+  background-color: #811ed1;
+}
+
+.color6 {
+  background-color: #e66224;
+}
+
+.color7 {
+  background-color: #e041ab;
+}
+
+.shape {
+  margin-bottom: 30px;
+}
+
+.outermost {
+  left: 120px;
+  transform-style: preserve-3d;
+  transform: rotateZ(90deg);
+  position: absolute;
+  perspective: 0px;
+  height: 300px;
+  width: 315px;
+}
+
+.outer1 {
+  transform-style: preserve-3d;
+  transform: translateX(100px) translateY(-100px) rotateZ(90deg);
+  transform-origin: 12% 50%;
+  height: 280px;
+}
