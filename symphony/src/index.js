@@ -33,27 +33,6 @@ client.on('connect', function () {
 
 const allSliders = [];
 
-function addDemoSliders() {
-    addDemoSlider(1, 1, 0);
-    addDemoSlider(2, 3, 100);
-    addDemoSlider(3, 2, 200);
-    addDemoSlider(4, 4, 300);
-    addDemoSlider(5, 3, 400);
-    addDemoSlider(6, 5, 500);
-    addDemoSlider(7, 4, 600);
-    addDemoSlider(8, 6, 700);
-    addDemoSlider(9, 5, 800);
-    addDemoSlider(10, 7, 900);
-    addDemoSlider(11, 6, 1000);
-    addDemoSlider(12, 4, 1100);
-    addDemoSlider(13, 5, 1200);
-    addDemoSlider(14, 3, 1300);
-    addDemoSlider(15, 4, 1400);
-    addDemoSlider(16, 2, 1500);
-    addDemoSlider(17, 3, 1600);
-    addDemoSlider(18, 1, 1700);
-}
-
 function addTimedSlider(message) {
     let timeoutSeconds = message.play_time - message.current_time - sliderTimeSecs;
     if (timeoutSeconds < 1.5) {
@@ -61,21 +40,51 @@ function addTimedSlider(message) {
     }
 
     setTimeout(function() {
-        addSlider(message.id, message.track);
+        addSlider(message.id, message.channel, message.track);
     }, timeoutSeconds * 1000);
 }
 
-function addDemoSlider(id, track, timeout) {
-    setTimeout(function() {
-        addSlider(id, track);
-    }, timeout);
+const colours = ['#0074d9', '#d83439', '#38b439', '#e9cd54', '#811ed1', '#e66224', '#e041ab'];
+const trackPositions = {};
+
+buildTracks([0, 1, 2, 3]);
+
+function buildTracks(channel_list) {
+    let lines = document.getElementById("lines");
+
+    let trackPos = 273;
+    let linePos = 280;
+
+    for (let channel of channel_list) {
+        trackPositions[channel.toString()] = [];
+
+        for (let index of colours.keys()) {
+            trackPos -= 40;
+            linePos -= 40;
+
+            trackPositions[channel.toString()].push(trackPos + "px");
+
+            let line = document.createElement("div");
+            line.id = "line-" + channel + "-" + (index + 1);
+            line.className += "line line" + (index + 1);
+            line.style.top = linePos + "px";
+
+            lines.appendChild(line);
+        }
+
+        trackPos -= 40;
+        linePos -= 40;
+    }
 }
 
-function buildSlider(id, track) {
+function buildSlider(id, channel, track) {
     let slider = {};
     slider.element = document.createElement("div");
     slider.track = track;
     slider.id = id;
+    slider.element.style.position = "absolute";
+    console.log("Channel: " + channel + "  Track: " + track);
+    slider.element.style.top = trackPositions[channel][Number(track)];
     slider.element.className +=
         "slider slider-anim-" + track + " track" + track + " shape color" + track;
 
@@ -83,9 +92,9 @@ function buildSlider(id, track) {
     return slider;
 }
 
-function addSlider(id, track) {
+function addSlider(id, channel, track) {
     let sliders = document.getElementById("sliders");
-    let slider = buildSlider(id, track);
+    let slider = buildSlider(id, channel, track);
     sliders.appendChild(slider.element);
 
     allSliders.push(slider);
@@ -103,5 +112,3 @@ function addSlider(id, track) {
         allSliders.splice(index, 1);
     }, sliderTimeSecs * 1000 + 200);
 }
-
-addDemoSliders();

@@ -23,24 +23,9 @@
   }
 }
 
-@mixin track($number) {
-  .track#{$number} {
-    position: absolute;
-    top: (273px - ($number * 40px))
-  }
-}
-
-@mixin line($number) {
-  .line#{$number} {
-    top: (280px - ($number * 40px))
-  }
-}
-
 $colors: #0074d9, #d83439, #38b439, #e9cd54, #811ed1, #e66224, #e041ab;
 
 @for $i from 1 through length($colors) {
-  @include track($i);
-  @include line($i);
   @include slider($i);
   @include slide-keyframes($i, nth($colors, $i));
   .color#{$i} { background-color: nth($colors, $i); }
