@@ -36,37 +36,15 @@
   }
 }
 
-@include track(1)
-@include track(2)
-@include track(3)
-@include track(4)
-@include track(5)
-@include track(6)
-@include track(7)
+$colors: #0074d9, #d83439, #38b439, #e9cd54, #811ed1, #e66224, #e041ab;
 
-@include line(1)
-@include line(2)
-@include line(3)
-@include line(4)
-@include line(5)
-@include line(6)
-@include line(7)
-
-@include slide-keyframes(1, #0074d9)
-@include slide-keyframes(2, #d83439)
-@include slide-keyframes(3, #38b439)
-@include slide-keyframes(4, #e9cd54)
-@include slide-keyframes(5, #811ed1)
-@include slide-keyframes(6, #e66224)
-@include slide-keyframes(7, #e041ab)
-
-@include slider(1)
-@include slider(2)
-@include slider(3)
-@include slider(4)
-@include slider(5)
-@include slider(6)
-@include slider(7)
+@for $i from 1 through length($colors) {
+  @include track($i);
+  @include line($i);
+  @include slider($i);
+  @include slide-keyframes($i, nth($colors, $i));
+  .color#{$i} { background-color: nth($colors, $i); }
+}
 
 .slider {
   height: 20px;
@@ -85,34 +63,6 @@
   border: 2px solid #999999;
   z-index: -1;
   box-shadow: 10px -5px #0e254b;
-}
-
-.color1 {
-  background-color: #0074d9;
-}
-
-.color2 {
-  background-color: #d83439;
-}
-
-.color3 {
-  background-color: #38b439;
-}
-
-.color4 {
-  background-color: #e9cd54;
-}
-
-.color5 {
-  background-color: #811ed1;
-}
-
-.color6 {
-  background-color: #e66224;
-}
-
-.color7 {
-  background-color: #e041ab;
 }
 
 .shape {
