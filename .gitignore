@@ -3,11 +3,11 @@
 .DS_Store
 __pycache__
 conductor/ui/lib
-node_modules/
-empty-webpack-project/node_modules
+**/node_modules
 env/
 .vscode/
 *.pyc
 npm-debug.log
 **/dist
 yarn-error.log
+package-lock.json
