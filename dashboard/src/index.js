@@ -2,7 +2,6 @@ import env       from '../../common/env';
 import jst       from '../../common/jayesstee';
 import Messaging from '../../common/messaging';
 import templates from './templates';
-import mqtt      from "mqtt";
 import $         from 'jquery';
 
 import './style.scss';
@@ -11,6 +10,7 @@ import './style.scss';
 class Dashboard {
 
   constructor() {
+    this.myId = 'dashboard'
     this.conductors = [];
     this.songs      = [];
     this.musicians  = [];
@@ -28,7 +28,6 @@ class Dashboard {
     this.testSeqNum   = 0;
     
     this.messaging = new Messaging(
-      mqtt,
       {
         callbacks: {
           connected:     (...args) => this.connected(...args),

@@ -1,9 +1,10 @@
 import env  from "./env";
+import mqtt from "../node_modules/mqtt";
 
 
 export default class Messaging { 
   
-  constructor(mqtt, opts) {
+  constructor(opts) {
     this.isConnected    = false;
     this.msgId          = 1;
     this.myId           = Math.random().toString().substr(2);

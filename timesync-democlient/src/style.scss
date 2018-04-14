@@ -1,0 +1,144 @@
+$fa-font-path: "~font-awesome/fonts";
+@import '~font-awesome/scss/font-awesome.scss';
+
+html, body {
+  overflow-y:hidden;
+  height:100%;
+}
+
+body {
+    margin:     0px;
+    padding:    0px;
+}
+
+th {
+    text-align: left;
+}
+
+.rtt-fast {
+    color: darkgreen;
+}
+
+.rtt-medium {
+    color: darkorange;
+}
+
+.rtt-slow {
+    color: darkred;
+}
+
+.header {
+    background-color: black;
+    font-family: Arial;
+    font-size:   20pt;
+    padding:     5px;
+    color:       white;
+}
+
+.body {
+    font-family: Arial;
+    font-size:   20pt;
+    padding:     0px;
+    margin:      0px;
+}
+
+.pane {
+    position: relative;
+    border: 0px solid black;
+    padding: 0px;
+    margin: 0px;
+    font-size: 16pt;
+    box-shadow: 0px 0px 2px rgba(0,0,0,1) inset;
+}
+
+.pane td,.pane th {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.pane-header {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    background-color: black;
+    color: white;
+    padding: 5px;
+    z-index: 1;
+}
+
+.pane-body {
+    position: absolute;
+    top: 25pt;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    padding: 5px 5px 5px 5px;
+    overflow: auto;
+}
+
+.conductor-pane {
+    float: left;
+    width: 40vw;
+    height: 18vh;
+}
+
+.song-pane {
+    float: left;
+    width: 40vw;
+    height: 25vh;
+}
+
+.symphony-pane {
+    float: left;
+    width: 40vw;
+    height: 17vh;
+}
+
+.musician-pane {
+    float: right;
+    width: 60vw;
+    height: 60vh;
+}
+
+.status-pane {
+    clear: both;
+    width: 100%;
+    height: 25vh;
+}
+
+.buttons-pane {
+    clear: both;
+    width: 100%;
+    height: 15vh;
+}
+
+.song-action-button {
+    cursor: pointer;
+}
+
+.song-action-button:hover {
+    color: blue;
+}
+
+.song-action-inactive {
+    cursor:  default;
+    opacity: 0.5;
+}
+
+.song-action-inactive:hover {
+    color: black;
+}
+
+.row-state-idle {
+    background-color: white;
+}
+
+.row-state-waiting {
+    background-color: #ffa;
+}
+
+.row-state-ready {
+    background-color: #afa;
+}
+
