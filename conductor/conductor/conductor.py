@@ -42,13 +42,15 @@ class Conductor:
 
         # Redirect for callbacks
         def onConnect():
+            print("here in conductor.py")
+            #exit()
             self.onConnect()
 
         def onRxMessage():
             self.onRxMessage()
         
         # Create and initialize solace messaging client
-        self.solace = SolaceMQTTClient({'onConnect': onConnect, 'onRxMessage': onRxMessage})
+        self.solace = SolaceMQTTClient(callbacks={'connect': onConnect, 'message': onRxMessage})
 
         # Unique id assigned to each message (note)
         self.unique_id = 0
@@ -72,6 +74,12 @@ class Conductor:
         # The length of a quarter note in milli seconds
         # 60 seconds / tempo (beats per minute)
         self.quarterNoteLength = 60/80*1000;
+
+    def onConnect(self):
+        print("Connected!!")
+
+    def onRxMessage(self, message):
+        print("Got message!")
 
     # Reads all of the files in the midi_files directory
     def get_midi_files(self, mypath):
@@ -150,5 +158,6 @@ class Conductor:
                 self.solace.publish(topic, json.dumps(message_body))
 
 conductor = Conductor()
-conductor.select_song(1)
-conductor.play_song()
+#conductor.select_song(1)
+#conductor.play_song()
+time.sleep(1000000)

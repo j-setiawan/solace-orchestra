@@ -87,6 +87,7 @@ export default class Messaging {
             this.pendingReplies[txMsg.msg_id].retries--;
           }
           else {
+            clearTimeout(this.pendingReplies[txMsg.msg_id].timer);
             delete this.pendingReplies[txMsg.msg_id];
             callback(message, {status: "timeout"});
           }
@@ -116,6 +117,7 @@ export default class Messaging {
   _connected() {
     this.isConnected = true;
     this.subscribe(`orchestra/p2p/${this.myId}`);
+    this.subscribe(`orchestra/broadcast`);
     if (this.callbacks.connected) {
       this.callbacks.connected();
     }
