@@ -1,3 +1,8 @@
+import {TopicPublisher} from './publisher.js';
+import {TopicSubscriber} from './subscriber.js';
+import '../css/hero.scss';
+import '../assets/solaceSymphonyInverted.png';
+
 // Amount of time it takes the slider to slide down the track
 var sliderTimeSecs = 1.5;
 var publisher = {};
@@ -5,53 +10,6 @@ var publisher = {};
 // Midi note to play when the button is pressed for a track
 // Track is the offset, note is the value;
 var noteArray = [60, 62, 64, 65, 67, 69, 71];
-
-function initializeMessaging(msgHandler) {
-
-  var factoryProps = new solace.SolclientFactoryProperties();
-  factoryProps.profile = solace.SolclientFactoryProfiles.version10;
-  solace.SolclientFactory.init(factoryProps);
-
-  var topic = "orchestra/theatre/default";
-
-  // create session
-  var session = solace.SolclientFactory.createSession({
-    url: hosturl,
-    vpnName: vpn,
-    userName: username,
-    password: pass
-  });
-
-  session.on(solace.SessionEventCode.MESSAGE, function (message) {
-    let contents = message.getBinaryAttachment();
-    console.log("Got a message", contents);
-    message = JSON.parse(contents);
-    msgHandler(message, 0);
-  });
-
-  session.on(solace.SessionEventCode.UP_NOTICE, function (sessionEvent) {
-    console.log('Connected');
-    session.subscribe(
-      solace.SolclientFactory.createTopicDestination(topic),
-      true, // generate confirmation when subscription is added successfully
-      "orchestra/default/0", // use topic name as correlation key
-      10000 // 10 seconds timeout for this operation
-  );
-
-  });
-
-  session.on(solace.SessionEventCode.SUBSCRIPTION_OK, function (sessionEvent) {
-    console.log('Subscribed');
-  });
-
-  try {
-    session.connect();
-  } catch (error) {
-    console.log(error.toString());
-  }
-
-  return session;
-}
 
 var allSliders = [];
 
@@ -81,16 +39,30 @@ function setup() {
 }
 
 function mainLoop() {
-
+  
   // Initialize the subscriber
-  initializeMessaging(addTimedSlider);
+  var subscriberTopic = "orchestra/theatre/default/0";
+  var session = TopicSubscriber(addTimedSlider, subscriberTopic);
 
   // Initialize the publisher
-  publisher = TopicPublisher("orchestra/theatre/default/note");
-  publisher.connect(); 
+  var publisherTopic = "orchestra/theatre/default/0/note";
+  publisher = TopicPublisher(publisherTopic);
+  publisher.connect();
   
   // Start the demo
   addDemoSliders();
+
+  // Wait for the demo sliders to complete and then
+  // add button click listeners
+  setTimeout( function() {
+    document.getElementById("button1").addEventListener("click", () => buttonPress(1));
+    document.getElementById("button2").addEventListener("click", () => buttonPress(2));
+    document.getElementById("button3").addEventListener("click", () => buttonPress(3));
+    document.getElementById("button4").addEventListener("click", () => buttonPress(4));
+    document.getElementById("button5").addEventListener("click", () => buttonPress(5));
+    document.getElementById("button6").addEventListener("click", () => buttonPress(6));
+    document.getElementById("button7").addEventListener("click", () => buttonPress(7));
+  }, 3000);
 }
 
 function addTimedSlider(message) {
@@ -158,6 +130,7 @@ function buttonPress(track) {
     } else
     return s.track;
     }).indexOf(track);
+
   var slider = allSliders[index];
 
   var currentTime = Date.now();
@@ -167,7 +140,7 @@ function buttonPress(track) {
 
     var timeOffset = 0;
     if (slider.removeTime != null) {
-      timeOffset = currentTime - slider.removeTime
+      timeOffset = currentTime - slider.removeTime;
       console.log("Too late by", currentTime - slider.removeTime);
     } else {
       timeOffset = -((slider.addTime + (sliderTimeSecs * 1000)) - currentTime);
@@ -180,7 +153,7 @@ function buttonPress(track) {
         'noteId': slider.message.noteId,
         'time_offset': timeOffset
       };
-      publisher.publish(noteMsg);
+      publisher.publish(JSON.stringify(noteMsg));
     }
 
   } else {

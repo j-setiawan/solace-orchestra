@@ -1,3 +1,6 @@
+import solace from '../lib/solclient-debug.js';
+import {hosturl, vpn, username, pass} from '../lib/credentials.js';
+
 var TopicPublisher = function (topicName) {
     'use strict';
     var publisher = {};
@@ -72,7 +75,7 @@ var TopicPublisher = function (topicName) {
     };
 
     // Publishes one message
-    publisher.publish = function (messageText) {
+    publisher.publish = function(messageText) {
         if (publisher.session !== null) {
             var message = solace.SolclientFactory.createMessage();
             message.setDestination(solace.SolclientFactory.createTopicDestination(publisher.topicName));
@@ -106,3 +109,5 @@ var TopicPublisher = function (topicName) {
 
     return publisher;
 };
+
+export { TopicPublisher };

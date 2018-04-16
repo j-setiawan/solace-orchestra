@@ -12,6 +12,7 @@ var eighthNote = 60;
 
 // Ode To Joy
 track.tempo(80);
+track.setInstrument(0, 0);
 track.addNote(0, 'e4', quarterNote);
 track.addNote(0, 'e4', quarterNote);
 track.addNote(0, 'f4', quarterNote);
