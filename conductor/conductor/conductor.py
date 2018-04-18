@@ -2,6 +2,8 @@
 import sys
 import mido
 import time
+import pprint
+import copy
 
 from solace.client import SolaceMQTTClient
 
@@ -42,15 +44,22 @@ class Conductor:
 
         # Redirect for callbacks
         def onConnect():
-            print("here in conductor.py")
-            #exit()
             self.onConnect()
 
-        def onRxMessage():
-            self.onRxMessage()
+        def onReregister(*args):
+            self.onReregister(*args)
+        
+        def onStartSong(*args):
+            self.onStartSong(*args)
+        
+        def onStopSong(*args):
+            self.onStopSong(*args)
         
         # Create and initialize solace messaging client
-        self.solace = SolaceMQTTClient(callbacks={'connect': onConnect, 'message': onRxMessage})
+        self.solace = SolaceMQTTClient(callbacks={'connect': onConnect,
+                                                  'start_song': onStartSong,
+                                                  'stop_song': onStopSong,
+                                                  'onReregister': onReregister})
 
         # Unique id assigned to each message (note)
         self.unique_id = 0
@@ -75,11 +84,46 @@ class Conductor:
         # 60 seconds / tempo (beats per minute)
         self.quarterNoteLength = 60/80*1000;
 
+    def makeRegistrationMessage(self):
+        return {
+                'msg_type':       'register',
+                'component_type': 'conductor',
+                'name':           'conductor_' + str(getpid()),
+                'song_list': [
+                    {
+                        'song_id': 1,
+                        'song_name': 'foo',
+                        'song_length': 100,
+                        'song_channels': [
+                            {
+                                'channel_id': 1,
+                                'instrument_name': 'guitar',
+                                'num_notes': 200
+                            }
+                        ]
+                    }
+                ]
+            }
+        
     def onConnect(self):
+        self.registrationMessage = self.makeRegistrationMessage()
+        self.solace.sendMessage("orchestra/registration", self.registrationMessage)
         print("Connected!!")
 
-    def onRxMessage(self, message):
-        print("Got message!")
+    def onReregister(self, topic, rxMessage):
+        # Reply with the original registration message
+        self.solace.sendResponse(rxMessage, self.registrationMessage)
+        
+    def onStartSong(self, topic, rxMessage):
+        print("Starting song:")
+        pprint.pprint(rxMessage)
+        songId = rxMessage['song_id']
+        self.select_song(1)
+        self.play_song()
+        self.solace.sendResponse(rxMessage, {})
+
+    def onStopSong(self, topic, rxMessage):
+        print("Stopping song")
 
     # Reads all of the files in the midi_files directory
     def get_midi_files(self, mypath):
@@ -158,6 +202,4 @@ class Conductor:
                 self.solace.publish(topic, json.dumps(message_body))
 
 conductor = Conductor()
-#conductor.select_song(1)
-#conductor.play_song()
 time.sleep(1000000)

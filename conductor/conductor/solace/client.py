@@ -3,6 +3,8 @@ import random
 import copy
 import time
 import pprint
+import json
+import re
 from pathlib import Path
 
 
@@ -10,10 +12,11 @@ class SolaceMQTTClient:
     
     def __init__(self, callbacks={}, connection_properties=str(Path.home()) + '/solace.cloud'):
 
-        self.isConnected = 0
-        self.msgId       = 1
-        self.myId        = str(random.randint(1, 2**32))
-        self.callbacks   = callbacks
+        self.isConnected    = 0
+        self.msgId          = 1
+        self.myId           = str(random.randint(1, 2**32))
+        self.callbacks      = callbacks
+        self.pendingReplies = {}
 
         props = {}
         with open(connection_properties, "r") as f:
@@ -27,7 +30,7 @@ class SolaceMQTTClient:
             self.onConnect(client, userdata, flags, rc)
         
         def onMessage(client, userdata, msg):
-            self.onMessage(client, userdata, msg)
+            self.processRxMessage(client, userdata, msg)
         
         self.client.on_connect = onConnect
         self.client.on_message = onMessage
@@ -47,28 +50,28 @@ class SolaceMQTTClient:
             self.client.subscribe(topic)
             
     def sendResponse(self, rxMessage, txMessage):
-        topic = self.makeReplyTopic(rxMessage.client_id)
-        txMessage.msg_type = rxMessage.msg_type
-        txMessage.msg_id   = rxMessage.msg_id
-        self.sendMessage(topc, txMessage)
+        topic                 = self.makeReplyTopic(rxMessage['client_id'])
+        txMessage['msg_type'] = rxMessage['msg_type'] + "_response"
+        txMessage['msg_id']   = rxMessage['msg_id']
+        self.sendMessage(topic, txMessage)
 
-    def sendMessage(self, topic, message, callback, timeout, retries):
-        txMessage              = copy.deepcopy(message)
-        txMessage.client_id    = self.myId
-        txMessage.current_time = self.getTime()
+    def sendMessage(self, topic, message, callback=None, timeout=0, retries=0):
+        txMessage                 = copy.deepcopy(message)
+        txMessage['client_id']    = self.myId
+        txMessage['current_time'] = self.getTime()
 
         if (not('msg_id' in txMessage)):
-            txMessage.msg_id = self.msgId
+            txMessage['msg_id'] = self.msgId
             self.msgId += 1
 
         if (not self.isConnected):
-            raise Error("Can't send a message before being connected")
+            raise NameError("Can't send a message before being connected")
 
         def timerExpiryHandler():
-            msgInfo = self.pendingReplies[txMessage.msg_id]
+            msgInfo = self.pendingReplies[txMessage['msg_id']]
             if msgInfo.retries:
                 self.client.publish(topic, payload=json.dumps(txMessage))
-                msgInfo.timer = Timer(timeout/1000, timerExpiryHandler)
+                msgInfo['timer'] = Timer(timeout/1000, timerExpiryHandler)
                 msgInfo.timer.start()
                 msgInfo.retries -= 1
             else:
@@ -86,20 +89,23 @@ class SolaceMQTTClient:
                 'timer':       timer
             }
             timer.start()
-            
+
+        print("Sending message to topic: " + topic)
+        pprint.pprint(txMessage)
         self.client.publish(topic, payload=json.dumps(txMessage))
 
     def getIsConnected(self):
         return self.isConnected
 
-    def getTime():
+    def getTime(self):
         return int(time.time() * 1000)
     
         
     def onConnect(self, client, userdata, flags, rc):
         if rc != 0:
-            raise Error("Failed to connect: " + str(rc))
+            raise NameError("Failed to connect: " + str(rc))
 
+        self.isConnected = 1
         self.subscribe('orchestra/p2p/' + self.myId)
         self.subscribe('orchestra/broadcast' + self.myId)
         
@@ -126,9 +132,9 @@ class SolaceMQTTClient:
         if 'msg_id' not in rxMessage:
             print('Received message with no msg_id')
             return
-        
-        msgType = rxMessage.msg_type
-        msgId   = rxMessage.msg_id
+
+        msgType = rxMessage['msg_type']
+        msgId   = rxMessage['msg_id']
 
         if msgType == "ping":
             self.sendResponse(rxMessage, {})
@@ -142,5 +148,5 @@ class SolaceMQTTClient:
             else:
                 print("Unhandled message type:" + msgType)
 
-    def makeReplyTopic(clientId):
+    def makeReplyTopic(self, clientId):
         return "orchestra/p2p/" + str(clientId)
