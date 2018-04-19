@@ -5,12 +5,13 @@ import time
 import pprint
 import json
 import re
+import os
 from pathlib import Path
 
 
 class SolaceMQTTClient:
     
-    def __init__(self, callbacks={}, connection_properties=str(Path.home()) + '/solace.cloud'):
+    def __init__(self, callbacks={}, connection_properties=str(os.path.expanduser('~')) + '/solace.cloud'):
 
         self.isConnected    = 0
         self.msgId          = 1
@@ -27,13 +28,24 @@ class SolaceMQTTClient:
         self.client = mqtt.Client()
 
         def onConnect(client, userdata, flags, rc):
+            print(flags)
+            print(rc)
             self.onConnect(client, userdata, flags, rc)
+        
+        def onDisconnect(client, userdata, rc):
+            print(rc)
         
         def onMessage(client, userdata, msg):
             self.processRxMessage(client, userdata, msg)
-        
+
+        def onLog(client, userdata, level, buf):
+            print(buf)
+
+        print(props)
         self.client.on_connect = onConnect
+        self.client.on_disconnect = onDisconnect
         self.client.on_message = onMessage
+        # self.client.on_log = onLog
         self.client.username_pw_set(props['username'], password=props['password'])
         self.client.connect(props['url'], int(props['port']), 20)
 
@@ -114,7 +126,15 @@ class SolaceMQTTClient:
 
     def processRxMessage(self, client, userdata, msg):
         print("Got message")
-        rxMessage = json.loads(msg.payload)
+        payload = msg.payload.decode()
+        pprint.pprint(payload)
+        try:
+            rxMessage = json.loads(payload)
+        except ValueError:
+            print("Failed to parse message: ")
+            print(payload)
+            return
+        
         pprint.pprint(rxMessage)
 
         if 'msg_type' not in rxMessage:
