@@ -102,8 +102,8 @@ class SolaceMQTTClient:
             }
             timer.start()
 
-        print("Sending message to topic: " + topic)
-        pprint.pprint(txMessage)
+        # print("Sending message to topic: " + topic)
+        # pprint.pprint(txMessage)
         self.client.publish(topic, payload=json.dumps(txMessage))
 
     def getIsConnected(self):
@@ -119,15 +119,14 @@ class SolaceMQTTClient:
 
         self.isConnected = 1
         self.subscribe('orchestra/p2p/' + self.myId)
-        self.subscribe('orchestra/broadcast' + self.myId)
+        self.subscribe('orchestra/broadcast')
         
         if 'connect' in self.callbacks:
             self.callbacks["connect"]()
 
     def processRxMessage(self, client, userdata, msg):
-        print("Got message")
         payload = msg.payload.decode()
-        pprint.pprint(payload)
+        # pprint.pprint(payload)
         try:
             rxMessage = json.loads(payload)
         except ValueError:
@@ -135,8 +134,6 @@ class SolaceMQTTClient:
             print(payload)
             return
         
-        pprint.pprint(rxMessage)
-
         if 'msg_type' not in rxMessage:
             print('Received message with no msg_type')
             return

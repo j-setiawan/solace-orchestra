@@ -10,7 +10,7 @@ import './style.scss';
 class Dashboard {
 
   constructor() {
-    this.myId = 'dashboard'
+    this.myId = 'dashboard';
     this.conductors = [];
     this.songs      = [];
     this.musicians  = [];
@@ -23,7 +23,7 @@ class Dashboard {
     this.theatreId       = 1;
     this.startTimeOffset = 10000;
 
-    this.pingTime        = 200;
+    this.pingTime        = 2000;
     
     this.testSeqNum   = 0;
     
@@ -59,6 +59,8 @@ class Dashboard {
       "orchestra/p2p/" + this.myId,
       "orchestra/registration"
     );
+    this.messaging.sendMessage(`orchestra/broadcast`,
+                               {msg_type: "reregister"});
   }
 
   register(topic, message) {
@@ -184,6 +186,7 @@ class Dashboard {
   }
 
   addPinger(message, component) {
+    component.pingsMissed = 0;
     component.pingTimer = setInterval(() => {
       this.messaging.sendMessage(`orchestra/p2p/${component.client_id}`,
                                  {msg_type: "ping"},
@@ -191,6 +194,58 @@ class Dashboard {
                                    this.handlePingResponse(component, txMessage, rxMessage);
                                  }, 1900);
     }, this.pingTime); 
+    
+  }
+
+  removeComponent(component) {
+    if (component.component_type === "conductor") {
+      delete this.conductorMap[component.name];
+      let index = 0;
+      this.conductors.map((entry, i) => {
+        if (entry.name === component.name) {
+          index = i;
+          return;
+        }
+      });
+      this.conductors.splice(index, 1);
+
+      let newSongs = [];
+      this.songs.map((song) => {
+        if (song.conductor_name != component.name) {
+          newSongs.push(song);
+        }
+      });
+      this.songs = newSongs;
+      jst.update("song");
+    }
+    else if (component.component_type === "musician") {
+      delete this.musicianMap[component.name];
+      let index = 0;
+      this.musicians.map((entry, i) => {
+        if (entry.name === component.name) {
+          index = i;
+          return;
+        }
+      });
+      this.musicians.splice(index, 1);
+    }
+    else if (component.component_type === "symphony") {
+      delete this.symphonyMap[component.name];
+      let index = 0;
+      this.symphonys.map((entry, i) => {
+        if (entry.name === component.name) {
+          index = i;
+          return;
+        }
+      });
+      this.symphonys.splice(index, 1);
+    }
+
+    if (component.pingTimer) {
+      clearInterval(component.pingTimer);
+    }
+
+    jst.update(component.component_type);
     
   }
 
@@ -206,6 +261,12 @@ class Dashboard {
     }
     
     component.latency = latency;
+
+    if (component.pingsMissed > 10) {
+      // Remove the component after ten non-replies
+      this.removeComponent(component);
+    }
+    
     jst.update(component.component_type);
   }
   

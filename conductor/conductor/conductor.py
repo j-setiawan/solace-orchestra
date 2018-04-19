@@ -64,7 +64,7 @@ class Conductor:
         self.solace = SolaceMQTTClient(callbacks={'connect': onConnect,
                                                   'start_song': onStartSong,
                                                   'stop_song': onStopSong,
-                                                  'onReregister': onReregister})
+                                                  'reregister': onReregister})
 
         # Unique id assigned to each message (note)
         self.unique_id = 0
@@ -122,9 +122,9 @@ class Conductor:
                     if program_change:
                         print("Got program change")
                         print(program_change)
-                        self.channel_instrument.insert(channelNum, program_change.program)
+                        self.channel_instrument['channelNum'] = program_change.program
                     else:
-                        self.channel_instrument.insert(channelNum, 0)
+                        self.channel_instrument['channelNum'] = 0
 
                     info['song_channels'].append(channelInfo)
 
@@ -152,13 +152,13 @@ class Conductor:
 
     def onReregister(self, topic, rxMessage):
         # Reply with the original registration message
-        self.solace.sendResponse(rxMessage, self.registrationMessage)
+        self.solace.sendMessage("orchestra/registration", self.registrationMessage)
         
     def onStartSong(self, topic, rxMessage):
         print("Starting song:")
         pprint.pprint(rxMessage)
         songId = rxMessage['song_id']
-        self.select_song(1)
+        self.select_song(songId)
         self.play_song()
         self.solace.sendResponse(rxMessage, {})
 
@@ -199,11 +199,6 @@ class Conductor:
 
                 program_change = next((m for m in channel if m.type == 'program_change'), 0)
                 self.channel_instrument[channel_number] = program_change.program
-
-    def send_meta(self):
-        self.solace.publish("orchestra/theatre/" + self.theatre + "/meta", json.dumps({
-            'channels': [*self.channels.keys()]
-        }))
 
     def play_song(self):
         for msg in self.selected_song_midi.play():
