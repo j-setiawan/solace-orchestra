@@ -36,6 +36,9 @@ class Conductor:
         # The list of midi filenames
         self.midi_files = self.get_midi_files(self.midi_file_path)
 
+        # Parse midi files
+        self.parseMidiFiles()
+
         # Topic format = orchestra/theatre/default
         # orchestra - constant
         # theatre - the "room" that the song is played in. Default value is 'default'
@@ -84,6 +87,24 @@ class Conductor:
         # 60 seconds / tempo (beats per minute)
         self.quarterNoteLength = 60/80*1000;
 
+    def parseMidiFiles(self):
+        self.midis = []
+        for file in self.midi_files:
+            midi = mido.MidiFile(self.midi_file_path + "/" + file)
+            print(midi)
+            info = {}
+            if midi.length:
+                info['length'] = midi.length
+            for msg in midi:
+                if msg.is_meta:
+                    pprint.pprint(msg)
+                    info[msg.type] = msg
+            print(info);
+                    
+        # self.selected_song_file = self.midi_files[song_index]
+        # self.selected_song_midi = mido.MidiFile(self.midi_file_path + "/" + self.selected_song_file)
+        exit()
+        
     def makeRegistrationMessage(self):
         return {
                 'msg_type':       'register',
