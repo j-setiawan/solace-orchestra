@@ -36,6 +36,7 @@ The following table lists all message types. Subsequent sections will describe t
 | msg_type      | Exchange Pattern | Description |
 | --------      | ---------------- | ----------- |
 | register      | Request-reply    | Sent to the dashboard by each component when it starts |
+| reregister    | Fire-and-forget  | Sent by the dashboard when it starts to tell all other components to register again |
 | start_song    | Request-reply    | Sent by the dashboard to tell all components that a new song is starting |
 | stop_song     | Fire-and-forget  | Sent by the dashboard to tell all components that the current song should be stopped |
 | complete_song | Fire-and-forget  | Sent by the symphony to indicate that the song is now complete |
@@ -108,6 +109,15 @@ On reception of the register message, the dashboard will reply to the sender's p
 
 * **component_type** - "symphony"
 * **name** - name of the symphony
+
+
+### Reregister Message
+
+This message is sent by the dashboard when it starts telling all the components to send their
+registration messages again. Each component should send out their registration message exactly like
+they did when they started.
+
+The topic for these messages is: orchestra/broadcast
 
 
 ### Start Song Message
