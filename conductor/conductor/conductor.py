@@ -1,13 +1,15 @@
 # Conductor
 import sys
+import math
 import mido
 import time
 import pprint
 import copy
+import re
 
 from solace.client import SolaceMQTTClient
 
-from os import listdir, getcwd, getpid
+from os      import listdir, getcwd, getpid
 from os.path import isfile, join
 
 import json
@@ -88,42 +90,59 @@ class Conductor:
         self.quarterNoteLength = 60/80*1000;
 
     def parseMidiFiles(self):
-        self.midis = []
+        self.song_list = []
+        self.midis     = []
+
+        song_id = 0
         for file in self.midi_files:
             midi = mido.MidiFile(self.midi_file_path + "/" + file)
-            print(midi)
-            info = {}
-            if midi.length:
-                info['length'] = midi.length
-            for msg in midi:
-                if msg.is_meta:
-                    pprint.pprint(msg)
-                    info[msg.type] = msg
-            print(info);
+            name = re.sub('\.mid$', '', file)
+            info = {
+                'song_name':     name,
+                'song_channels': []
+            }
+
+            if (midi.length):
+                info['song_length'] = math.ceil(midi.length)
+
+            for channel_id in range(len(midi.tracks)):
+                channel = midi.tracks[channel_id]
+                notes = [n for n in channel if n.type == "note_on"]
+
+                if notes:
+                    channelInfo = {}
+                    channelNum  = notes[0].channel
                     
-        # self.selected_song_file = self.midi_files[song_index]
-        # self.selected_song_midi = mido.MidiFile(self.midi_file_path + "/" + self.selected_song_file)
-        exit()
-        
+                    channelInfo['channel_id']      = channelNum
+                    channelInfo['num_notes']       = len(notes)
+                    channelInfo['instrument_name'] = channel.name.strip(),
+
+                    program_change = next((m for m in channel if m.type == 'program_change'), None)
+
+                    if program_change:
+                        print("Got program change")
+                        print(program_change)
+                        self.channel_instrument.insert(channelNum, program_change.program)
+                    else:
+                        self.channel_instrument.insert(channelNum, 0)
+
+                    info['song_channels'].append(channelInfo)
+
+            info['song_id'] = song_id
+            
+            self.song_list.append(info)
+            self.midis.append(midi)
+
+            song_id += 1
+                    
+            print(info);
+                            
     def makeRegistrationMessage(self):
         return {
                 'msg_type':       'register',
                 'component_type': 'conductor',
                 'name':           'conductor_' + str(getpid()),
-                'song_list': [
-                    {
-                        'song_id': 1,
-                        'song_name': 'foo',
-                        'song_length': 100,
-                        'song_channels': [
-                            {
-                                'channel_id': 1,
-                                'instrument_name': 'guitar',
-                                'num_notes': 200
-                            }
-                        ]
-                    }
-                ]
+                'song_list':      self.song_list
             }
         
     def onConnect(self):
