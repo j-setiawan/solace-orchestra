@@ -107,7 +107,7 @@ export default templates = {
                                 ),
 
   statusBody: (opts, data) => $div({cn: 'pane-body'},
-                                   `${opts.title} body`
+                                   data.status.body
                                   ),
 
   buttonBody: (opts, data) => $div({cn: 'pane-body'},

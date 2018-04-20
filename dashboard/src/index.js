@@ -20,6 +20,8 @@ class Dashboard {
     this.musicianMap  = {};
     this.symphonyMap  = {};
 
+    this.status       = {body: ""};
+    
     this.theatreId       = 1;
     this.startTimeOffset = 10000;
 
@@ -366,6 +368,7 @@ class Dashboard {
       song.isPlaying = false;
       this.sendStopSongMessage();
       this.setAllComponentState("idle");
+      this.status.body = `Stopped song: ${this.currentSong.name}`;
       delete this.currentSong;
     }
     else if (this.currentSong) {
@@ -374,9 +377,11 @@ class Dashboard {
     else {
       this.currentSong   = song;
       song.isPlaying     = true;
+      this.status.body = `${this.currentSong.name} is now playing`;
       this.sendStartSongMessage(song);
     }
     jst.update("song");
+    jst.update("status");
   }
 
   setAllComponentState(state) {
