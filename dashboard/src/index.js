@@ -33,11 +33,11 @@ class Dashboard {
       {
         callbacks: {
           connected:          (...args) => this.connected(...args),
-          register:           (...args) => this.register(...args),
-          start_song:         (...args) => this.startSong(...args),
-          stop_song:          (...args) => this.stopSong(...args),
-          complete_song:      (...args) => this.completeSong(...args),
-          score_update:       (...args) => this.scoreUpdate(...args),
+          register:           (...args) => this.rxRegister(...args),
+          start_song:         (...args) => this.rxStartSong(...args),
+          stop_song:          (...args) => this.rxStopSong(...args),
+          complete_song:      (...args) => this.rxCompleteSong(...args),
+          score_update:       (...args) => this.rxScoreUpdate(...args),
           reregister:         ()        => {},
           register_response:  ()        => {}
         }
@@ -67,7 +67,7 @@ class Dashboard {
                                {msg_type: "reregister"});
   }
 
-  register(topic, message) {
+  rxRegister(topic, message) {
 
     for (let checkField of ["component_type", "name"]) {
       if (!message[checkField]) {
@@ -218,6 +218,11 @@ class Dashboard {
         if (song.conductor_name != component.name) {
           newSongs.push(song);
         }
+        else {
+          if (song === this.currentSong) {
+            this.stopCurrentSong();
+          }
+        }
       });
       this.songs = newSongs;
       jst.update("song");
@@ -279,20 +284,20 @@ class Dashboard {
     jst.update(component.component_type);
   }
   
-  startSong(topic, message) {
+  rxStartSong(topic, message) {
     console.log("Received start_song message: ", message);
     this.messaging.sendResponse(message, {status: 'ok'});
   }
   
-  stopSong(topic, message) {
+  rxStopSong(topic, message) {
     console.log("Received stop_song message: ", message);
   }
   
-  completeSong(topic, message) {
+  rxCompleteSong(topic, message) {
     console.log("Received complete_song message: ", message);
   }
   
-  scoreUpdate(topic, message) {
+  rxScoreUpdate(topic, message) {
     console.log("Received scoreUpdate message: ", message);
   }
 
@@ -365,28 +370,38 @@ class Dashboard {
 
   songActionClicked(song) {
     if (song.isPlaying) {
-      song.isPlaying = false;
-      this.sendStopSongMessage();
-      this.setAllComponentState("idle");
-      this.status.body = `Stopped song: ${this.currentSong.name}`;
-      delete this.currentSong;
+      this.stopCurrentSong();
     }
     else if (this.currentSong) {
       // Do nothing - must stop current song first
     }
     else {
-      this.currentSong   = song;
-      song.isPlaying     = true;
-      this.status.body = `${this.currentSong.name} is now playing`;
-      this.sendStartSongMessage(song);
+      this.startSong(song);
     }
-    jst.update("song");
+  }
+
+  stopCurrentSong() {
+    this.currentSong.isPlaying = false;
+    this.sendStopSongMessage();
+    this.setAllComponentState("idle");
+    this.status.body = `Stopped playing ${this.currentSong.song_name}`;
+    delete this.currentSong;
     jst.update("status");
+    jst.update("song");
+  }
+
+  startSong(song) {
+    this.currentSong   = song;
+    song.isPlaying     = true;
+    this.status.body = `${this.currentSong.song_name} is now playing`;
+    this.sendStartSongMessage(song);
+    jst.update("status");
+    jst.update("song");
   }
 
   setAllComponentState(state) {
     this.conductors.map(component => component.state = "idle");
-    this.musicians.map(component => component.state = "idle");
+    this.musicians.map (component => component.state = "idle");
     this.symphonies.map(component => component.state = "idle");
 
     jst.update("conductor");

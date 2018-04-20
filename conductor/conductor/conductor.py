@@ -166,7 +166,6 @@ class Conductor:
 
     def onStopSong(self, topic, rxMessage):
         self.stopSong = 1
-        print("Stopping song")
 
     # Reads all of the files in the midi_files directory
     def get_midi_files(self, mypath):
@@ -208,7 +207,6 @@ class Conductor:
         self.select_song(songId)
         for msg in self.selected_song_midi.play():
             if self.stopSong:
-                print("Stopping current song")
                 return
             if msg.type == "note_on":
                 channel_number = msg.channel
@@ -241,7 +239,7 @@ class Conductor:
                     ]}
 
                 self.unique_id += 1
-                print("Topic: " + topic)
+                #print("Topic: " + topic)
                 #print(message_body)
                 self.solace.publish(topic, json.dumps(message_body))
 

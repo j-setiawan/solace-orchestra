@@ -62,7 +62,7 @@ export default class Messaging {
   sendMessage(topic, message, callback, timeout, retries) {
     let txMsg = Object.assign({}, message);
     txMsg.client_id    = this.myId;
-    txMsg.current_time = (new Date()).getTime();
+    txMsg.current_time = this.getTime();
 
     if (!txMsg.msg_id) {
       txMsg.msg_id = this.msgId++;
