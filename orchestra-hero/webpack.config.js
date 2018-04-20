@@ -1,6 +1,5 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-//const solclientjs = path.resolve(__dirname, 'lib/solclient-debug.js');
 
 module.exports = {
     entry: './src/index.js',
@@ -8,11 +7,6 @@ module.exports = {
         filename: 'bundle.js',
         path: path.resolve(__dirname, 'dist')
     },
-    // resolve: {
-    //   alias: {
-    //     solclientjs$: solclientjs
-    //   }
-    // },
     plugins: [
         new HtmlWebpackPlugin({
             title: 'Orchestra-Hero',
@@ -39,9 +33,6 @@ module.exports = {
             {
                 test: /\.(png|svg|jpg|gif)$/,
                 loader: "file-loader?name=/assets/[name].[ext]"
-                // use: [
-                //     'file-loader'
-                // ]
             },
             {
                 test: /\.(wav|woff|woff2|eot|ttf|otf)$/,

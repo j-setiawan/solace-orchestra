@@ -8,7 +8,6 @@ import $ from 'jquery';
 
 var myId = 'orchestra-hero-' + uuid();
 
-console.log(myId);
 var theatreId = "default";
 var channelId = "0";
 var messaging;
