@@ -225,6 +225,10 @@ class Conductor:
                 #  current_time: Epoch time in seconds UTC
                 #  play_time: The time the note should be played
                 message_body = {
+                    'msg_type': 'note',
+                    'client_id': self.unique_id,
+                    'msg_id': self.unique_id,
+                    'current_time': current_time,
                     'note_list': [
                         {
                         'note_id': str(self.unique_id),

@@ -8,6 +8,7 @@ const colours = ['#0074d9', '#d83439', '#38b439', '#e9cd54', '#811ed1', '#e66224
 
 let trackPositions = {};
 const line_spacing = 20;
+const allSliders = [];
 
 function addTimedSlider(message) {
     let timeoutSeconds = message.play_time - message.current_time - sliderTimeSecs;
@@ -102,6 +103,7 @@ class Symphony {
                     stop_song: (...args) => this.rxStopSong(...args),
                     complete_song: (...args) => this.rxCompleteSong(...args),
                     score_update: (...args) => this.rxScoreUpdate(...args),
+                    note: (...args) => this.rxNote(...args),
                     reregister: () => {
                     },
                     register_response: () => {
@@ -116,8 +118,9 @@ class Symphony {
 
         this.messaging.subscribe(
             "orchestra/broadcast",
-            "orchestra/p2p/" + this.myId,
-            "orchestra/registration"
+            "orchestra/p2p/symphony_0",
+            "orchestra/registration",
+            "orchestra/theatre/default/+"
         );
     }
 
@@ -137,8 +140,8 @@ class Symphony {
         buildTracks(channelList);
     }
 
-    playNote() {
-        for (let note of contents.note_list) {
+    rxNote(topic, message) {
+        for (let note of message.note_list) {
             let delay = (note.play_time - note.current_time) * 1000 + (sliderTimeSecs * 1000);
 
             addTimedSlider(note);
@@ -147,7 +150,7 @@ class Symphony {
                 return player.play(
                     note.program,   // instrument: 24 is "Acoustic Guitar (nylon)"
                     note.note,      // note: midi number or frequency in Hz (if > 127)
-                    0.5,            // velocity: 0..1
+                    0.2,            // velocity: 0..1
                     0,              // delay in seconds
                     0.5,            // duration in seconds
                 )
