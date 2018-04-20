@@ -119,6 +119,12 @@ class Dashboard {
         
         newSong.action = () => templates.songAction(this, newSong);
         newSong.events = {click: e => this.songActionClicked(newSong)};
+
+        if (song.is_playing) {
+          if (!this.currentSong) {
+            this.selectPlayingSong(newSong);
+          }
+        }
         
         newSongs.push(newSong);
       }
@@ -391,10 +397,14 @@ class Dashboard {
   }
 
   startSong(song) {
+    this.selectPlayingSong(song);
+    this.sendStartSongMessage(song);
+  }
+
+  selectPlayingSong(song) {
     this.currentSong   = song;
     song.isPlaying     = true;
     this.status.body = `${this.currentSong.song_name} is now playing`;
-    this.sendStartSongMessage(song);
     jst.update("status");
     jst.update("song");
   }
