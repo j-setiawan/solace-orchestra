@@ -30,12 +30,14 @@ class Dashboard {
     this.messaging = new Messaging(
       {
         callbacks: {
-          connected:     (...args) => this.connected(...args),
-          register:      (...args) => this.register(...args),
-          start_song:    (...args) => this.startSong(...args),
-          stop_song:     (...args) => this.stopSong(...args),
-          complete_song: (...args) => this.completeSong(...args),
-          score_update:  (...args) => this.scoreUpdate(...args)
+          connected:          (...args) => this.connected(...args),
+          register:           (...args) => this.register(...args),
+          start_song:         (...args) => this.startSong(...args),
+          stop_song:          (...args) => this.stopSong(...args),
+          complete_song:      (...args) => this.completeSong(...args),
+          score_update:       (...args) => this.scoreUpdate(...args),
+          reregister:         ()        => {},
+          register_response:  ()        => {}
         }
       }
     );
@@ -296,7 +298,6 @@ class Dashboard {
   // Temp testing stuff
   //
   addConductor() {
-    console.log("Click");
     let songs = [];
     for (let i = 0; i < 10; i++) {
       songs.push(this.makeSong());
@@ -439,7 +440,8 @@ class Dashboard {
       song_id:        this.currentSong.song_id,
       song_name:      this.currentSong.song_name
     };
-    this.messaging.sendMessage("orchestra/theatre/${this.theatreId}", msg);
+    let topic = `orchestra/theatre/${this.theatreId}`;
+    this.messaging.sendMessage(topic, msg);
   }
 
 }

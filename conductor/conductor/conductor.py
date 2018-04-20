@@ -6,6 +6,7 @@ import time
 import pprint
 import copy
 import re
+import threading
 
 from solace.client import SolaceMQTTClient
 
@@ -155,14 +156,16 @@ class Conductor:
         self.solace.sendMessage("orchestra/registration", self.registrationMessage)
         
     def onStartSong(self, topic, rxMessage):
-        print("Starting song:")
-        pprint.pprint(rxMessage)
-        songId = rxMessage['song_id']
-        self.select_song(songId)
-        self.play_song()
+        songId          = rxMessage['song_id']
+        theatreId       = rxMessage['theatre_id']
+
+        self.solace.subscribe("orchestra/theatre/" + str(theatreId))
+        self.songThread = threading.Thread(target=self.play_song, args=[songId])
+        self.songThread.start()
         self.solace.sendResponse(rxMessage, {})
 
     def onStopSong(self, topic, rxMessage):
+        self.stopSong = 1
         print("Stopping song")
 
     # Reads all of the files in the midi_files directory
@@ -200,13 +203,18 @@ class Conductor:
                 program_change = next((m for m in channel if m.type == 'program_change'), 0)
                 self.channel_instrument[channel_number] = program_change.program
 
-    def play_song(self):
+    def play_song(self, songId):
+        self.stopSong = 0
+        self.select_song(songId)
         for msg in self.selected_song_midi.play():
+            if self.stopSong:
+                print("Stopping current song")
+                return
             if msg.type == "note_on":
                 channel_number = msg.channel
                 topic = "orchestra/theatre/" + self.theatre + "/" + str(channel_number)
                 unique_notes = self.channels[channel_number]['unique']
-                print(str(msg.channel) + ": " + self.notes[msg.note % 12])
+                #print(str(msg.channel) + ": " + self.notes[msg.note % 12])
 
                 current_time = time.time()
 
@@ -234,7 +242,7 @@ class Conductor:
 
                 self.unique_id += 1
                 print("Topic: " + topic)
-                print(message_body)
+                #print(message_body)
                 self.solace.publish(topic, json.dumps(message_body))
 
 conductor = Conductor()

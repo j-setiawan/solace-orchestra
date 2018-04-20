@@ -59,6 +59,7 @@ class SolaceMQTTClient:
             for sub in topic:
                 self.client.subscribe(sub)
         if type(topic) is str:
+            print("Subscribing to: " + topic)
             self.client.subscribe(topic)
             
     def sendResponse(self, rxMessage, txMessage):
