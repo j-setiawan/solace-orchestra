@@ -1,9 +1,13 @@
 import env       from '../../common/env';
 import Messaging from '../../common/messaging';
-import '../css/hero.scss';
 import '../assets/solaceSymphonyInverted.png';
+import 'bootstrap';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import '../css/hero.scss';
+import $ from 'jquery';
 
-var myId = 'orchestra-hero';
+var myId = 'orchestra-hero-' + uuid();
+
 var theatreId = "default";
 var channelId = "0";
 var messaging;
@@ -57,17 +61,28 @@ function mainLoop() {
   // Start the demo
   addDemoSliders();
 
-  // Wait for the demo sliders to complete and then
-  // add button click listeners
-  setTimeout( function() {
-    document.getElementById("button1").addEventListener("click", () => buttonPress(1));
-    document.getElementById("button2").addEventListener("click", () => buttonPress(2));
-    document.getElementById("button3").addEventListener("click", () => buttonPress(3));
-    document.getElementById("button4").addEventListener("click", () => buttonPress(4));
-    document.getElementById("button5").addEventListener("click", () => buttonPress(5));
-    document.getElementById("button6").addEventListener("click", () => buttonPress(6));
-    document.getElementById("button7").addEventListener("click", () => buttonPress(7));
-  }, 3000);
+  // Show the "get name" modal
+  setTimeout(() => $('#getNameModal').modal('toggle'), 3200);
+  $('#submitName').click(() => getName());
+}
+
+function getName() {
+  var musicianName = String($('#musician-name').val());
+  if (musicianName !== "") {
+    $('#getNameModal').modal('toggle');
+    registerMusician(musicianName);
+    enableButtons();
+  }
+}
+
+function enableButtons() {
+  document.getElementById("button1").addEventListener("click", () => buttonPress(1));
+  document.getElementById("button2").addEventListener("click", () => buttonPress(2));
+  document.getElementById("button3").addEventListener("click", () => buttonPress(3));
+  document.getElementById("button4").addEventListener("click", () => buttonPress(4));
+  document.getElementById("button5").addEventListener("click", () => buttonPress(5));
+  document.getElementById("button6").addEventListener("click", () => buttonPress(6));
+  document.getElementById("button7").addEventListener("click", () => buttonPress(7));
 }
 
 function connected() {
@@ -97,6 +112,16 @@ function publishSpontaneousNoteMessage(messageJSon) {
   var publisherTopic = `orchestra/theatre/${theatreId}/${channelId}/note`;
   messageJSon.msg_type = "music_score";
   messaging.sendMessage(publisherTopic, messageJSon);
+}
+
+function registerMusician(musicianName) {
+  var publisherTopic = `orchestra/registration`;
+  var messageJson = {
+     'client_id': myId,
+     'component_type': 'musician',
+     'name': musicianName
+  };
+  messaging.sendMessage(publisherTopic, messageJson);
 }
 
 function addTimedSlider(message) {
@@ -210,5 +235,13 @@ function buttonPress(track) {
   }
 }
 
-window.onload = setup;
+function uuid() {
+  return 'xxxxxxxx'.replace(/[x]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
 
+$(document).ready(function(){
+   setup();
+});
