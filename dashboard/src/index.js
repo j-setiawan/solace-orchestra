@@ -10,7 +10,7 @@ import './style.scss';
 class Dashboard {
 
   constructor() {
-    this.myId = 'dashboard'
+    this.myId = 'dashboard';
     this.conductors = [];
     this.songs      = [];
     this.musicians  = [];
@@ -20,22 +20,26 @@ class Dashboard {
     this.musicianMap  = {};
     this.symphonyMap  = {};
 
+    this.status       = {body: ""};
+    
     this.theatreId       = 1;
     this.startTimeOffset = 10000;
 
-    this.pingTime        = 200;
+    this.pingTime        = 2000;
     
     this.testSeqNum   = 0;
     
     this.messaging = new Messaging(
       {
         callbacks: {
-          connected:     (...args) => this.connected(...args),
-          register:      (...args) => this.register(...args),
-          start_song:    (...args) => this.startSong(...args),
-          stop_song:     (...args) => this.stopSong(...args),
-          complete_song: (...args) => this.completeSong(...args),
-          score_update:  (...args) => this.scoreUpdate(...args)
+          connected:          (...args) => this.connected(...args),
+          register:           (...args) => this.rxRegister(...args),
+          start_song:         (...args) => this.rxStartSong(...args),
+          stop_song:          (...args) => this.rxStopSong(...args),
+          complete_song:      (...args) => this.rxCompleteSong(...args),
+          score_update:       (...args) => this.rxScoreUpdate(...args),
+          reregister:         ()        => {},
+          register_response:  ()        => {}
         }
       }
     );
@@ -59,9 +63,11 @@ class Dashboard {
       "orchestra/p2p/" + this.myId,
       "orchestra/registration"
     );
+    this.messaging.sendMessage(`orchestra/broadcast`,
+                               {msg_type: "reregister"});
   }
 
-  register(topic, message) {
+  rxRegister(topic, message) {
 
     for (let checkField of ["component_type", "name"]) {
       if (!message[checkField]) {
@@ -184,6 +190,7 @@ class Dashboard {
   }
 
   addPinger(message, component) {
+    component.pingsMissed = 0;
     component.pingTimer = setInterval(() => {
       this.messaging.sendMessage(`orchestra/p2p/${component.client_id}`,
                                  {msg_type: "ping"},
@@ -191,6 +198,63 @@ class Dashboard {
                                    this.handlePingResponse(component, txMessage, rxMessage);
                                  }, 1900);
     }, this.pingTime); 
+    
+  }
+
+  removeComponent(component) {
+    if (component.component_type === "conductor") {
+      delete this.conductorMap[component.name];
+      let index = 0;
+      this.conductors.map((entry, i) => {
+        if (entry.name === component.name) {
+          index = i;
+          return;
+        }
+      });
+      this.conductors.splice(index, 1);
+
+      let newSongs = [];
+      this.songs.map((song) => {
+        if (song.conductor_name != component.name) {
+          newSongs.push(song);
+        }
+        else {
+          if (song === this.currentSong) {
+            this.stopCurrentSong();
+          }
+        }
+      });
+      this.songs = newSongs;
+      jst.update("song");
+    }
+    else if (component.component_type === "musician") {
+      delete this.musicianMap[component.name];
+      let index = 0;
+      this.musicians.map((entry, i) => {
+        if (entry.name === component.name) {
+          index = i;
+          return;
+        }
+      });
+      this.musicians.splice(index, 1);
+    }
+    else if (component.component_type === "symphony") {
+      delete this.symphonyMap[component.name];
+      let index = 0;
+      this.symphonys.map((entry, i) => {
+        if (entry.name === component.name) {
+          index = i;
+          return;
+        }
+      });
+      this.symphonys.splice(index, 1);
+    }
+
+    if (component.pingTimer) {
+      clearInterval(component.pingTimer);
+    }
+
+    jst.update(component.component_type);
     
   }
 
@@ -206,6 +270,12 @@ class Dashboard {
     }
     
     component.latency = latency;
+
+    if (component.pingsMissed > 10) {
+      // Remove the component after ten non-replies
+      this.removeComponent(component);
+    }
+    
     jst.update(component.component_type);
   }
   
@@ -214,20 +284,20 @@ class Dashboard {
     jst.update(component.component_type);
   }
   
-  startSong(topic, message) {
+  rxStartSong(topic, message) {
     console.log("Received start_song message: ", message);
     this.messaging.sendResponse(message, {status: 'ok'});
   }
   
-  stopSong(topic, message) {
+  rxStopSong(topic, message) {
     console.log("Received stop_song message: ", message);
   }
   
-  completeSong(topic, message) {
+  rxCompleteSong(topic, message) {
     console.log("Received complete_song message: ", message);
   }
   
-  scoreUpdate(topic, message) {
+  rxScoreUpdate(topic, message) {
     console.log("Received scoreUpdate message: ", message);
   }
 
@@ -235,7 +305,6 @@ class Dashboard {
   // Temp testing stuff
   //
   addConductor() {
-    console.log("Click");
     let songs = [];
     for (let i = 0; i < 10; i++) {
       songs.push(this.makeSong());
@@ -301,25 +370,38 @@ class Dashboard {
 
   songActionClicked(song) {
     if (song.isPlaying) {
-      song.isPlaying = false;
-      this.sendStopSongMessage();
-      this.setAllComponentState("idle");
-      delete this.currentSong;
+      this.stopCurrentSong();
     }
     else if (this.currentSong) {
       // Do nothing - must stop current song first
     }
     else {
-      this.currentSong   = song;
-      song.isPlaying     = true;
-      this.sendStartSongMessage(song);
+      this.startSong(song);
     }
+  }
+
+  stopCurrentSong() {
+    this.currentSong.isPlaying = false;
+    this.sendStopSongMessage();
+    this.setAllComponentState("idle");
+    this.status.body = `Stopped playing ${this.currentSong.song_name}`;
+    delete this.currentSong;
+    jst.update("status");
+    jst.update("song");
+  }
+
+  startSong(song) {
+    this.currentSong   = song;
+    song.isPlaying     = true;
+    this.status.body = `${this.currentSong.song_name} is now playing`;
+    this.sendStartSongMessage(song);
+    jst.update("status");
     jst.update("song");
   }
 
   setAllComponentState(state) {
     this.conductors.map(component => component.state = "idle");
-    this.musicians.map(component => component.state = "idle");
+    this.musicians.map (component => component.state = "idle");
     this.symphonies.map(component => component.state = "idle");
 
     jst.update("conductor");
@@ -378,7 +460,8 @@ class Dashboard {
       song_id:        this.currentSong.song_id,
       song_name:      this.currentSong.song_name
     };
-    this.messaging.sendMessage("orchestra/theatre/${this.theatreId}", msg);
+    let topic = `orchestra/theatre/${this.theatreId}`;
+    this.messaging.sendMessage(topic, msg);
   }
 
 }

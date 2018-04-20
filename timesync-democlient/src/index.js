@@ -1,10 +1,9 @@
-import env       from '../../common/env';
 import jst       from '../../common/jayesstee';
 import Messaging from '../../common/messaging';
 import TimeRef   from '../../common/timeref';
 import templates from './templates';
 import $         from 'jquery';
-import './style.scss';
+import './style.css';
 
 class TestClient {
 
@@ -19,6 +18,10 @@ class TestClient {
         }
       }
     );
+
+    // Fill in all the HTML from the templates
+    jst("body").appendChild(templates.page());
+
   }
 
   connected() {
@@ -30,7 +33,16 @@ class TestClient {
   }
 
   time_synced() {
-    console.log('Calling getSyncedTime(), got:' + this.timeref.getSyncedTime() );
+    var AllNodes=document.getElementsByClassName("RealServerTime");
+    // format Date and Time 
+    var TimeToString=(new Date(this.timeref.getSyncedTime()).toTimeString().split(' ')[0] + '\n' +
+        'Diff:' + this.timeref.getTimeOffset());
+    for(var ipos=0;ipos<AllNodes.length;ipos++){
+        AllNodes[ipos].innerHTML=TimeToString;
+    }
+
+    window.setTimeout(() => {this.time_synced();}, 10);
+
   }
 }
 

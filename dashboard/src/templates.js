@@ -107,7 +107,7 @@ export default templates = {
                                 ),
 
   statusBody: (opts, data) => $div({cn: 'pane-body'},
-                                   `${opts.title} body`
+                                   data.status.body
                                   ),
 
   buttonBody: (opts, data) => $div({cn: 'pane-body'},
@@ -151,7 +151,7 @@ export default templates = {
   songAction: (data, song) => $i({events: song.events,
                                   cn: "song-action-button fa " +
                                   (typeof data.currentSong !== "undefined" ?
-                                   data.currentSong.song_id === song.song_id ?
+                                   data.currentSong === song ?
                                    "fa-stop-circle" :
                                    "fa-play-circle song-action-inactive" :
                                    "fa-play-circle")

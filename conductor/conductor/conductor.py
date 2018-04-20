@@ -6,6 +6,7 @@ import time
 import pprint
 import copy
 import re
+import threading
 
 from solace.client import SolaceMQTTClient
 
@@ -64,7 +65,7 @@ class Conductor:
         self.solace = SolaceMQTTClient(callbacks={'connect': onConnect,
                                                   'start_song': onStartSong,
                                                   'stop_song': onStopSong,
-                                                  'onReregister': onReregister})
+                                                  'reregister': onReregister})
 
         # Unique id assigned to each message (note)
         self.unique_id = 0
@@ -122,9 +123,9 @@ class Conductor:
                     if program_change:
                         print("Got program change")
                         print(program_change)
-                        self.channel_instrument.insert(channelNum, program_change.program)
+                        self.channel_instrument['channelNum'] = program_change.program
                     else:
-                        self.channel_instrument.insert(channelNum, 0)
+                        self.channel_instrument['channelNum'] = 0
 
                     info['song_channels'].append(channelInfo)
 
@@ -152,18 +153,19 @@ class Conductor:
 
     def onReregister(self, topic, rxMessage):
         # Reply with the original registration message
-        self.solace.sendResponse(rxMessage, self.registrationMessage)
+        self.solace.sendMessage("orchestra/registration", self.registrationMessage)
         
     def onStartSong(self, topic, rxMessage):
-        print("Starting song:")
-        pprint.pprint(rxMessage)
-        songId = rxMessage['song_id']
-        self.select_song(1)
-        self.play_song()
+        songId          = rxMessage['song_id']
+        theatreId       = rxMessage['theatre_id']
+
+        self.solace.subscribe("orchestra/theatre/" + str(theatreId))
+        self.songThread = threading.Thread(target=self.play_song, args=[songId])
+        self.songThread.start()
         self.solace.sendResponse(rxMessage, {})
 
     def onStopSong(self, topic, rxMessage):
-        print("Stopping song")
+        self.stopSong = 1
 
     # Reads all of the files in the midi_files directory
     def get_midi_files(self, mypath):
@@ -200,18 +202,17 @@ class Conductor:
                 program_change = next((m for m in channel if m.type == 'program_change'), 0)
                 self.channel_instrument[channel_number] = program_change.program
 
-    def send_meta(self):
-        self.solace.publish("orchestra/theatre/" + self.theatre + "/meta", json.dumps({
-            'channels': [*self.channels.keys()]
-        }))
-
-    def play_song(self):
+    def play_song(self, songId):
+        self.stopSong = 0
+        self.select_song(songId)
         for msg in self.selected_song_midi.play():
+            if self.stopSong:
+                return
             if msg.type == "note_on":
                 channel_number = msg.channel
                 topic = "orchestra/theatre/" + self.theatre + "/" + str(channel_number)
                 unique_notes = self.channels[channel_number]['unique']
-                print(str(msg.channel) + ": " + self.notes[msg.note % 12])
+                #print(str(msg.channel) + ": " + self.notes[msg.note % 12])
 
                 current_time = time.time()
 
@@ -238,8 +239,8 @@ class Conductor:
                     ]}
 
                 self.unique_id += 1
-                print("Topic: " + topic)
-                print(message_body)
+                #print("Topic: " + topic)
+                #print(message_body)
                 self.solace.publish(topic, json.dumps(message_body))
 
 conductor = Conductor()
