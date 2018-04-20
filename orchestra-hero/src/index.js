@@ -1,7 +1,12 @@
-import {TopicPublisher} from './publisher.js';
-import {TopicSubscriber} from './subscriber.js';
+import env       from '../../common/env';
+import Messaging from '../../common/messaging';
 import '../css/hero.scss';
 import '../assets/solaceSymphonyInverted.png';
+
+var myId = 'orchestra-hero';
+var theatreId = "default";
+var channelId = "0";
+var messaging;
 
 // Amount of time it takes the slider to slide down the track
 var sliderTimeSecs = 1.5;
@@ -40,14 +45,14 @@ function setup() {
 
 function mainLoop() {
   
-  // Initialize the subscriber
-  var subscriberTopic = "orchestra/theatre/default/0";
-  var session = TopicSubscriber(addTimedSlider, subscriberTopic);
-
-  // Initialize the publisher
-  var publisherTopic = "orchestra/theatre/default/0/note";
-  publisher = TopicPublisher(publisherTopic);
-  publisher.connect();
+  messaging = new Messaging(
+    {
+      callbacks: {
+        connected:     (...args) => connected(...args),
+        music_score:   (...args) => receiveMusicScore(...args),
+      }
+    }
+  );
   
   // Start the demo
   addDemoSliders();
@@ -63,6 +68,35 @@ function mainLoop() {
     document.getElementById("button6").addEventListener("click", () => buttonPress(6));
     document.getElementById("button7").addEventListener("click", () => buttonPress(7));
   }, 3000);
+}
+
+function connected() {
+  console.log("Connected.");
+  // Subscribe to theatreId and channelId
+  var subscriberTopic = `orchestra/theatre/${theatreId}/${channelId}`;
+  messaging.subscribe(
+    "orchestra/broadcast",
+    "orchestra/p2p/" + myId,
+    subscriberTopic
+  );
+}
+
+function receiveMusicScore(message) {
+  // Sent by the conductor on a per channel basis to let all musicians know what to play and when to play it
+  addTimedSlider(message);
+}
+
+function publishPlayNoteMessage(messageJSon) {
+  var publisherTopic = `orchestra/theatre/${theatreId}/${channelId}/note`;
+  messageJSon.msg_type = "play_note";
+  messaging.sendMessage(publisherTopic, messageJSon);
+}
+
+function publishSpontaneousNoteMessage(messageJSon) {
+  // TODO: discuss topic to be used for spontaneous play
+  var publisherTopic = `orchestra/theatre/${theatreId}/${channelId}/note`;
+  messageJSon.msg_type = "music_score";
+  messaging.sendMessage(publisherTopic, messageJSon);
 }
 
 function addTimedSlider(message) {
@@ -153,7 +187,7 @@ function buttonPress(track) {
         'noteId': slider.message.noteId,
         'time_offset': timeOffset
       };
-      publisher.publish(JSON.stringify(noteMsg));
+      publishPlayNoteMessage(noteMsg);
     }
 
   } else {
@@ -166,14 +200,13 @@ function buttonPress(track) {
     var spontaneousNote = { "note_list": [{
       'program': 0,
       'track': track,
-      'note': noteArray[track - 1],
+      'noteid': noteArray[track - 1],
       'channel': 0,
       'duration': 750,
-      'current_time': currentTime,
       'play_time': currentTime
     }]};
 
-    publisher.publish(JSON.stringify(spontaneousNote));
+    publishSpontaneousNoteMessage(spontaneousNote);
   }
 }
 
