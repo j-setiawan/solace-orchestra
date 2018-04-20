@@ -118,14 +118,8 @@ class Conductor:
                     channelInfo['num_notes']       = len(notes)
                     channelInfo['instrument_name'] = channel.name.strip(),
 
-                    program_change = next((m for m in channel if m.type == 'program_change'), None)
-
-                    if program_change:
-                        print("Got program change")
-                        print(program_change)
-                        self.channel_instrument['channelNum'] = program_change.program
-                    else:
-                        self.channel_instrument['channelNum'] = 0
+                    program_change = next((m for m in channel if m.type == 'program_change'), {'program': 0})
+                    self.channel_instrument[channelNum] = program_change.program
 
                     info['song_channels'].append(channelInfo)
 
