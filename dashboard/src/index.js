@@ -113,7 +113,8 @@ class Dashboard {
         let newSong = Object.assign(
           {
             conductor_name: message.name,
-            numChannels:    song.song_channels.length
+            numChannels:    song.song_channels.length,
+            channelList: song.song_channels
           },
           song);
         
@@ -426,8 +427,9 @@ class Dashboard {
       song_id:        this.currentSong.song_id,
       song_name:      this.currentSong.song_name,
       song_length:    this.currentSong.song_name,
+      song_channels:  this.currentSong.song_channels,
       theatre_id:     this.theatreId,
-      start_time:     this.messaging.getTime() + this.startTimeOffset
+      start_time:     this.messaging.getTime() + this.startTimeOffset,
     };
 
     // Send to the specific conductor
