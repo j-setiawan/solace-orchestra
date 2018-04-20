@@ -272,7 +272,7 @@ class Dashboard {
     }
     else {
       component.pingsMissed = 0;
-      latency = rxMessage.current_time - txMessage.current_time;
+      latency = this.messaging.getTime() - txMessage.current_time;
     }
     
     component.latency = latency;
@@ -433,6 +433,9 @@ class Dashboard {
     // Send to the specific conductor
     let conductor   = this.conductorMap[song.conductor_name];
     conductor.state = "waiting";
+
+    msg.time_server_topic = `orchestra/p2p/${conductor.client_id}`;
+
     this.messaging.sendMessage(`orchestra/p2p/${conductor.client_id}`,
                                msg,
                                (txMessage, rxMessage) => {
