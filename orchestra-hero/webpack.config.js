@@ -17,8 +17,8 @@ module.exports = {
         new HtmlWebpackPlugin({
             title: 'Orchestra-Hero',
             template: './src/index.html'
-        })
-    ],
+        }),
+        ],
     devtool: 'inline-source-map',
     module: {
         rules: [
@@ -31,6 +31,10 @@ module.exports = {
                 }, {
                     loader: "sass-loader" // compiles Sass to CSS
                 }]
+            },
+            {
+                test: /\.css$/,
+                use: ['style-loader', 'css-loader']
             },
             {
                 test: /\.(png|svg|jpg|gif)$/,

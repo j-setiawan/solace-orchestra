@@ -1,7 +1,10 @@
 import {TopicPublisher} from './publisher.js';
 import {TopicSubscriber} from './subscriber.js';
-import '../css/hero.scss';
 import '../assets/solaceSymphonyInverted.png';
+import 'bootstrap';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import '../css/hero.scss';
+import $ from 'jquery';
 
 // Amount of time it takes the slider to slide down the track
 var sliderTimeSecs = 1.5;
@@ -12,6 +15,8 @@ var publisher = {};
 var noteArray = [60, 62, 64, 65, 67, 69, 71];
 
 var allSliders = [];
+
+var musicianName = "";
 
 function addDemoSliders() {
   addDemoSlider(1, 1, 0);
@@ -52,17 +57,27 @@ function mainLoop() {
   // Start the demo
   addDemoSliders();
 
-  // Wait for the demo sliders to complete and then
-  // add button click listeners
-  setTimeout( function() {
-    document.getElementById("button1").addEventListener("click", () => buttonPress(1));
-    document.getElementById("button2").addEventListener("click", () => buttonPress(2));
-    document.getElementById("button3").addEventListener("click", () => buttonPress(3));
-    document.getElementById("button4").addEventListener("click", () => buttonPress(4));
-    document.getElementById("button5").addEventListener("click", () => buttonPress(5));
-    document.getElementById("button6").addEventListener("click", () => buttonPress(6));
-    document.getElementById("button7").addEventListener("click", () => buttonPress(7));
-  }, 3000);
+  // Show the "get name" modal
+  setTimeout(() => $('#getNameModal').modal('toggle'), 3200);
+  $('#submitName').click(() => getName());
+}
+
+function getName() {
+  musicianName = String($('#musician-name').val());
+  if (musicianName !== "") {
+    $('#getNameModal').modal('toggle');
+    console.log("Name is :", musicianName);
+  }
+}
+
+function enableButtons() {
+  document.getElementById("button1").addEventListener("click", () => buttonPress(1));
+  document.getElementById("button2").addEventListener("click", () => buttonPress(2));
+  document.getElementById("button3").addEventListener("click", () => buttonPress(3));
+  document.getElementById("button4").addEventListener("click", () => buttonPress(4));
+  document.getElementById("button5").addEventListener("click", () => buttonPress(5));
+  document.getElementById("button6").addEventListener("click", () => buttonPress(6));
+  document.getElementById("button7").addEventListener("click", () => buttonPress(7));
 }
 
 function addTimedSlider(message) {
@@ -177,5 +192,9 @@ function buttonPress(track) {
   }
 }
 
-window.onload = setup;
+$(document).ready(function(){
+   setup();
+});
+
+//window.onload = setup;
 
