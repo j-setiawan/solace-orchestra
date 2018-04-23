@@ -1,5 +1,6 @@
 import env       from '../../common/env';
 import Messaging from '../../common/messaging';
+import TimeRef from '../../common/TimeRef';
 import '../assets/solaceSymphonyInverted.png';
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -11,6 +12,9 @@ var myId = 'orchestra-hero-' + uuid();
 var theatreId = "default";
 var channelId = "0";
 var messaging;
+var timeRef;
+var syncReady = false;
+var musicianName = '';
 
 // Amount of time it takes the slider to slide down the track
 var sliderTimeSecs = 1.5;
@@ -54,9 +58,18 @@ function mainLoop() {
       callbacks: {
         connected:     (...args) => connected(...args),
         music_score:   (...args) => receiveMusicScore(...args),
+        register_response: (...args) => registerResponse(...args),
+        reregister: (...args) => reregister(...args),
+        
       }
     }
   );
+  
+  timeRef = new TimeRef(messaging, 
+    function(){
+      syncReady = true;
+      console.log('Sync Ready');
+    });
   
   // Start the demo
   addDemoSliders();
@@ -67,7 +80,7 @@ function mainLoop() {
 }
 
 function getName() {
-  var musicianName = String($('#musician-name').val());
+  musicianName = String($('#musician-name').val());
   if (musicianName !== "") {
     $('#getNameModal').modal('toggle');
     registerMusician(musicianName);
@@ -101,6 +114,18 @@ function receiveMusicScore(message) {
   addTimedSlider(message);
 }
 
+function registerResponse(message) {
+  // Sent by dashboard as a response to registration
+  console.log('Received register_response');
+  console.log(message);
+}
+
+function reregister(message) {
+  // Sent by dashboard when it starts
+  console.log('Reregister');
+  registerMusician(musicianName);
+}
+
 function publishPlayNoteMessage(messageJSon) {
   var publisherTopic = `orchestra/theatre/${theatreId}/${channelId}/note`;
   messageJSon.msg_type = "play_note";
@@ -117,8 +142,8 @@ function publishSpontaneousNoteMessage(messageJSon) {
 function registerMusician(musicianName) {
   var publisherTopic = `orchestra/registration`;
   var messageJson = {
-      msg_type:       "register",
-      component_type: "musician",
+      msg_type:       'register',
+      component_type: 'musician',
      client_id: myId,
      name: musicianName
   };
@@ -128,6 +153,7 @@ function registerMusician(musicianName) {
 function addTimedSlider(message) {
   if (message.hasOwnProperty('note_list')) {
     message.note_list.forEach(function (noteMessage) {
+      var currentTime = timeRef.getSyncedTime();
       var timeoutSeconds = noteMessage.play_time - noteMessage.current_time - sliderTimeSecs;
       if (timeoutSeconds < 1.5) {
         timeoutSeconds = 1.5;
@@ -181,19 +207,22 @@ function addSlider(id, track, message) {
   }, sliderTimeSecs * 1000 + 200);
 }
 
+// Handle button presses on all tracks
 function buttonPress(track) {
   console.log("Button press on track", track);
+
   // Check if there are any sliders for this track
   var index = allSliders.map(function(s) {
     if (s.pressed != null) {
      return null; 
     } else
-    return s.track;
+      return s.track;
     }).indexOf(track);
 
   var slider = allSliders[index];
 
-  var currentTime = Date.now();
+  //var currentTime = Date.now();
+  var currentTime = timeRef.getSyncedTime();
 
   if (slider != null) {
     slider.pressed = true;
@@ -210,8 +239,11 @@ function buttonPress(track) {
     // Send the message
     if (slider.message != null) {
       var noteMsg = {
-        'noteId': slider.message.noteId,
-        'time_offset': timeOffset
+        client_id: myId,
+        current_time: currentTime,
+        msg_type: 'play_note',
+        noteId: slider.message.noteId,
+        time_offset: timeOffset
       };
       publishPlayNoteMessage(noteMsg);
     }
@@ -220,17 +252,24 @@ function buttonPress(track) {
 
     // There is no note attached to the button press
     // This is a spontaneous note
-    console.log("No slider!!");
+    console.log("Spontaneous note");
 
     // Generate a note based on which button is pressed
-    var spontaneousNote = { "note_list": [{
-      'program': 0,
-      'track': track,
-      'noteid': noteArray[track - 1],
-      'channel': 0,
-      'duration': 750,
-      'play_time': currentTime
-    }]};
+    var spontaneousNote = {
+      client_id: myId,
+      current_time: currentTime,
+      msg_type: 'play_note',
+      note_list: [
+        {
+          program: 0,
+          track: track,
+          noteid: noteArray[track - 1],
+          channel: 0,
+          duration: 750,
+          play_time: currentTime
+        }
+      ]
+    };
 
     publishSpontaneousNoteMessage(spontaneousNote);
   }
