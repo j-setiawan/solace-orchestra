@@ -1,45 +1,13 @@
-import env from '../../common/env'
-import mqtt from'mqtt';
 import './index.scss';
+import Messaging from "../../common/messaging"
 
 const sliderTimeSecs = 1.5;
 const Instruments = require('webaudio-instruments');
 const player = new Instruments();
+const colours = ['#0074d9', '#d83439', '#38b439', '#e9cd54', '#811ed1', '#e66224', '#e041ab'];
 
-const client  = mqtt.connect(env.broker.url, {
-    username: env.broker.username,
-    password: env.broker.password
-});
-
-client.on('message', function (topic, message) {
-    let contents = JSON.parse(message.toString());
-
-    if (contents.note_list) {
-        for (let note of contents.note_list) {
-            let delay = (note.play_time - note.current_time) * 1000 + (sliderTimeSecs * 1000);
-
-            addTimedSlider(note);
-
-            setTimeout(function () {
-                return player.play(
-                    note.program,   // instrument: 24 is "Acoustic Guitar (nylon)"
-                    note.note,      // note: midi number or frequency in Hz (if > 127)
-                    0.5,            // velocity: 0..1
-                    0,              // delay in seconds
-                    0.5,            // duration in seconds
-                )
-            }, delay);
-        }
-    } else {
-        buildTracks(contents.channels);
-    }
-});
-
-client.on('connect', function () {
-    console.log('Connected');
-    client.subscribe("orchestra/theatre/default/+");
-});
-
+let trackPositions = {};
+const line_spacing = 20;
 const allSliders = [];
 
 function addTimedSlider(message) {
@@ -48,16 +16,10 @@ function addTimedSlider(message) {
         timeoutSeconds = 1.5;
     }
 
-    setTimeout(function() {
+    setTimeout(function () {
         addSlider(message.id, message.channel, message.track);
     }, timeoutSeconds * 1000);
 }
-
-const colours = ['#0074d9', '#d83439', '#38b439', '#e9cd54', '#811ed1', '#e66224', '#e041ab'];
-let trackPositions = {};
-
-const line_spacing = 20;
-buildTracks([0]);
 
 function buildTracks(channel_list) {
     trackPositions = {};
@@ -115,18 +77,89 @@ function addSlider(id, channel, track) {
     allSliders.push(slider);
 
     // Remove the slider after it hits the end
-    setTimeout(function() {
+    setTimeout(function () {
         slider.element.remove();
         slider.removeTime = Date.now();
         slider = {};
     }, sliderTimeSecs * 1000);
 
     // Remove the event
-    setTimeout(function() {
-        let index = allSliders.map(function(s) { return s.id; }).indexOf(id);
+    setTimeout(function () {
+        let index = allSliders.map(function (s) {
+            return s.id;
+        }).indexOf(id);
         allSliders.splice(index, 1);
     }, sliderTimeSecs * 1000 + 200);
 }
+
+class Symphony {
+    constructor() {
+        this.messaging = new Messaging(
+            {
+                callbacks: {
+                    connected: (...args) => this.connected(...args),
+                    register: (...args) => this.rxRegister(...args),
+                    start_song: (...args) => this.rxStartSong(...args),
+                    stop_song: (...args) => this.rxStopSong(...args),
+                    complete_song: (...args) => this.rxCompleteSong(...args),
+                    score_update: (...args) => this.rxScoreUpdate(...args),
+                    note: (...args) => this.rxNote(...args),
+                    reregister: () => {
+                    },
+                    register_response: () => {
+                    }
+                }
+            }
+        );
+    }
+
+    connected() {
+        console.log("Connected")
+
+        this.messaging.subscribe(
+            "orchestra/broadcast",
+            "orchestra/p2p/symphony_0",
+            "orchestra/registration",
+            "orchestra/theatre/default/+"
+        );
+    }
+
+    rxRegister(topic, message) {
+        this.messaging.sendMessage("orchestra/registration", {
+            'msg_type':       'register',
+            'component_type': 'symphony',
+            'name':           'symphony_0'
+        })
+    }
+
+    rxStartSong(topic, message) {
+        let channelList = Object.keys(message.channel_list).map(function (key) {
+            return message.channel_list[key]["channel_id"];
+        });
+
+        buildTracks(channelList);
+    }
+
+    rxNote(topic, message) {
+        for (let note of message.note_list) {
+            let delay = (note.play_time - note.current_time) * 1000 + (sliderTimeSecs * 1000);
+
+            addTimedSlider(note);
+
+            setTimeout(function () {
+                return player.play(
+                    note.program,   // instrument: 24 is "Acoustic Guitar (nylon)"
+                    note.note,      // note: midi number or frequency in Hz (if > 127)
+                    0.2,            // velocity: 0..1
+                    0,              // delay in seconds
+                    0.5,            // duration in seconds
+                )
+            }, delay);
+        }
+    }
+}
+
+let symphony = new Symphony();
 
 // let demoId = 0;
 //

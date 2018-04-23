@@ -136,6 +136,7 @@ The topic for these messages is: orchestra/p2p/\<client_id>
 * **song_name**
 * **song_length**
 * **theatre_id**
+* **time_server_topic** - topic to use when communicating with the time server
 * **start_time** - time that the song should start. (5 to 10 seconds in future?)
 
 #### Musician Start Song Message
@@ -144,6 +145,7 @@ The topic for these messages is: orchestra/p2p/\<client_id>
 * **song_name**
 * **song_length**
 * **theatre_id**
+* **time_server_topic** - topic to use when communicating with the time server
 * **channel_id** - IDs are spread across all participating musicians
 * **start_time** - time that the song should start. (5 to 10 seconds in future?)
 
@@ -153,6 +155,7 @@ The topic for these messages is: orchestra/p2p/\<client_id>
 * **song_name**
 * **song_length**
 * **theatre_id**
+* **time_server_topic** - topic to use when communicating with the time server
 * **start_time** - time that the song should start. (5 to 10 seconds in future?)
 
 

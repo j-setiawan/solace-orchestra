@@ -113,12 +113,19 @@ class Dashboard {
         let newSong = Object.assign(
           {
             conductor_name: message.name,
-            numChannels:    song.song_channels.length
+            numChannels:    song.song_channels.length,
+            channelList: song.song_channels
           },
           song);
         
         newSong.action = () => templates.songAction(this, newSong);
         newSong.events = {click: e => this.songActionClicked(newSong)};
+
+        if (song.is_playing) {
+          if (!this.currentSong) {
+            this.selectPlayingSong(newSong);
+          }
+        }
         
         newSongs.push(newSong);
       }
@@ -266,7 +273,7 @@ class Dashboard {
     }
     else {
       component.pingsMissed = 0;
-      latency = rxMessage.current_time - txMessage.current_time;
+      latency = this.messaging.getTime() - txMessage.current_time;
     }
     
     component.latency = latency;
@@ -391,10 +398,14 @@ class Dashboard {
   }
 
   startSong(song) {
+    this.selectPlayingSong(song);
+    this.sendStartSongMessage(song);
+  }
+
+  selectPlayingSong(song) {
     this.currentSong   = song;
     song.isPlaying     = true;
     this.status.body = `${this.currentSong.song_name} is now playing`;
-    this.sendStartSongMessage(song);
     jst.update("status");
     jst.update("song");
   }
@@ -416,13 +427,17 @@ class Dashboard {
       song_id:        this.currentSong.song_id,
       song_name:      this.currentSong.song_name,
       song_length:    this.currentSong.song_name,
+      song_channels:  this.currentSong.song_channels,
       theatre_id:     this.theatreId,
-      start_time:     this.messaging.getTime() + this.startTimeOffset
+      start_time:     this.messaging.getTime() + this.startTimeOffset,
     };
 
     // Send to the specific conductor
     let conductor   = this.conductorMap[song.conductor_name];
     conductor.state = "waiting";
+
+    msg.time_server_topic = `orchestra/p2p/${conductor.client_id}`;
+
     this.messaging.sendMessage(`orchestra/p2p/${conductor.client_id}`,
                                msg,
                                (txMessage, rxMessage) => {
@@ -441,13 +456,13 @@ class Dashboard {
     let channelId = 0;
     for (let component of this.musicians) {
       component.state = "waiting";
-      msg.channel_id = channelId++;
+      msg.channel_id = song.channel_list[channelId++].channel_id;
       this.messaging.sendMessage(`orchestra/p2p/${component.client_id}`,
                                  msg,
                                  (txMessage, rxMessage) => {
                                    this.handleStartSongResponse(component, component, rxMessage);
                                  }, 2000, 4);
-      if (channelId > song.numChannels) {
+      if (channelId >= song.numChannels) {
         channelId = 0;
       }
     }

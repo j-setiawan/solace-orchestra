@@ -118,14 +118,8 @@ class Conductor:
                     channelInfo['num_notes']       = len(notes)
                     channelInfo['instrument_name'] = channel.name.strip(),
 
-                    program_change = next((m for m in channel if m.type == 'program_change'), None)
-
-                    if program_change:
-                        print("Got program change")
-                        print(program_change)
-                        self.channel_instrument['channelNum'] = program_change.program
-                    else:
-                        self.channel_instrument['channelNum'] = 0
+                    program_change = next((m for m in channel if m.type == 'program_change'), {'program': 0})
+                    self.channel_instrument[channelNum] = program_change.program
 
                     info['song_channels'].append(channelInfo)
 
@@ -165,7 +159,8 @@ class Conductor:
         self.solace.sendResponse(rxMessage, {})
 
     def onStopSong(self, topic, rxMessage):
-        self.stopSong = 1
+        for song in self.song_list:
+            song['is_playing'] = 0
 
     # Reads all of the files in the midi_files directory
     def get_midi_files(self, mypath):
@@ -203,10 +198,15 @@ class Conductor:
                 self.channel_instrument[channel_number] = program_change.program
 
     def play_song(self, songId):
-        self.stopSong = 0
+
+        for song in self.song_list:
+            song['is_playing'] = 0
+        self.song_list[songId]['is_playing'] = 1
+
         self.select_song(songId)
         for msg in self.selected_song_midi.play():
-            if self.stopSong:
+            if not self.song_list[songId]['is_playing']:
+                print("Stopping song")
                 return
             if msg.type == "note_on":
                 channel_number = msg.channel
@@ -225,6 +225,10 @@ class Conductor:
                 #  current_time: Epoch time in seconds UTC
                 #  play_time: The time the note should be played
                 message_body = {
+                    'msg_type': 'note',
+                    'client_id': self.unique_id,
+                    'msg_id': self.unique_id,
+                    'current_time': current_time,
                     'note_list': [
                         {
                         'note_id': str(self.unique_id),
