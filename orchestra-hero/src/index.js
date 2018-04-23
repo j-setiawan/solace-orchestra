@@ -117,9 +117,10 @@ function publishSpontaneousNoteMessage(messageJSon) {
 function registerMusician(musicianName) {
   var publisherTopic = `orchestra/registration`;
   var messageJson = {
-     'client_id': myId,
-     'component_type': 'musician',
-     'name': musicianName
+      msg_type:       "register",
+      component_type: "musician",
+     client_id: myId,
+     name: musicianName
   };
   messaging.sendMessage(publisherTopic, messageJson);
 }
