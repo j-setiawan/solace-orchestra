@@ -88,7 +88,7 @@ function startSong(message) {
   messaging.subscribe(
     subscriberTopic
   );
-  messaging.sendResponse(message, {});
+  messaging.sendResponse(message, {}); 
 }
 
 function enableButtons() {
