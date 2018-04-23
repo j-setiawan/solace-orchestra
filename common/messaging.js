@@ -7,6 +7,8 @@ export default class Messaging {
   
   constructor(opts) {
     this.isConnected    = false;
+    this.WILDCARD       = "*"; // Wildcard for topic subscriptions in SMF
+    // this.WILDCARD       = "*"; // Wildcard for topic subscriptions in MQTT
     this.msgId          = 1;
     this.myId           = Math.random().toString().substr(2);
 
