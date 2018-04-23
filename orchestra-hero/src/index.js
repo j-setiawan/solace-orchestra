@@ -81,8 +81,8 @@ function getName() {
   }
 }
 
-function startSong(message) {
-  console.log("Start song", message.channel_id);
+function startSong(topic, message) {
+  console.log("Start song ", topic, message);
   channelId = message.channel_id;
   var subscriberTopic = `orchestra/theatre/${theatreId}/${channelId}`;
   messaging.subscribe(
@@ -136,7 +136,7 @@ function publishPlayNoteMessage(messageJSon) {
 function publishSpontaneousNoteMessage(messageJSon) {
   // TODO: discuss topic to be used for spontaneous play
   var publisherTopic = `orchestra/theatre/${theatreId}/${channelId}/note`;
-  messageJSon.msg_type = "music_score";
+  messageJSon.msg_type = "note";
   messaging.sendMessage(publisherTopic, messageJSon);
 }
 
@@ -155,10 +155,10 @@ function addTimedSlider(message) {
   if (message.hasOwnProperty('note_list')) {
     message.note_list.forEach(function (noteMessage) {
       var currentTime = messaging.getSyncedTime();
-      var timeoutSeconds = noteMessage.play_time - noteMessage.current_time - sliderTimeSecs;
-      if (timeoutSeconds < 1.5) {
+      // var timeoutSeconds = noteMessage.play_time - noteMessage.current_time - sliderTimeSecs;
+      // if (timeoutSeconds < 1.5) {
         timeoutSeconds = 1.5;
-      }
+ //     }
 
       setTimeout(function () {
         addSlider(noteMessage.id, noteMessage.track, noteMessage);
@@ -259,7 +259,7 @@ function buttonPress(track) {
     var spontaneousNote = {
       client_id: myId,
       current_time: currentTime,
-      msg_type: 'play_note',
+      msg_type: 'note',
       note_list: [
         {
           program: 0,
