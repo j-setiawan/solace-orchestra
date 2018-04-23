@@ -1,5 +1,6 @@
 import env  from "./env";
-import mqtt from "../node_modules/mqtt";
+//import mqtt from "../node_modules/mqtt";
+import solace from './solclient-debug.js';
 
 
 export default class Messaging { 
@@ -12,26 +13,45 @@ export default class Messaging {
     this.callbacks      = opts.callbacks;
     this.pendingReplies = {};
 
-    this.client = mqtt.connect(
-      env.broker.url, {
-        username: env.broker.username,
-        password: env.broker.password
-      });
+    this.sessionProps = {
+      url:      env.broker.smfurl,
+      vpnName:  env.broker.smfvpn,
+      userName: env.broker.username,
+      password: env.broker.password
+    };
+
+    var factoryProps = new solace.SolclientFactoryProperties();
+    factoryProps.profile = solace.SolclientFactoryProfiles.version10;
+    solace.SolclientFactory.init(factoryProps);
+
+    this.client = solace.SolclientFactory.createSession( this.sessionProps );
+
 
     let self = this;
-    this.client.on("connect", function() {
+    this.client.on(solace.SessionEventCode.UP_NOTICE, function() {
       self._connected.apply(self);
     });
 
-    this.client.on('message', function (topic, message) {
-      self._processRxMessage.apply(self, [topic, message]);
+//    this.client.on(solace.SessionEventCode.SUBSCRIPTION_OK, function(sessionEvent) {
+//      self._subscribed.apply(self, sessionEvent.correlationKey);
+//    });
+
+    this.client.on(solace.SessionEventCode.MESSAGE, function (message) {
+      self._processRxMessage.apply( self, [ message.getDestination().getName(), message.getBinaryAttachment() ] );
     });
+
+    this.client.connect();
   }
 
   // Inject a list of subscriptions for this client
-  subscribe(...subs) {
-    for (let sub of subs) {
-      this.client.subscribe(sub);
+  subscribe(...topics) {
+    for (let topic of topics) {
+      this.client.subscribe( solace.SolclientFactory.createTopicDestination(topic),
+        //true, // request confirmation
+        false,
+        topic, // correlation key so we know which subscription suceedes
+        1000 // subscribe timeout
+      );
     }
   }
 
@@ -83,7 +103,7 @@ export default class Messaging {
         retries:   retries,
         timer:     setTimeout(() => {
           if (this.pendingReplies[txMsg.msg_id].retries) {
-            this.client.publish(topic,
+            this._publishText(topic,
                                 JSON.stringify(txMsg));
             this.pendingReplies[txMsg.msg_id].retries--;
           }
@@ -96,9 +116,18 @@ export default class Messaging {
       };
     }
 
+
     // console.log("Publishing:", topic, message);
-    this.client.publish(topic,
-                        JSON.stringify(txMsg));
+    this._publishText(topic, JSON.stringify(txMsg));
+
+  }
+
+  _publishText(topic, text) {
+    var message = solace.SolclientFactory.createMessage();
+    message.setDestination(solace.SolclientFactory.createTopicDestination(topic));
+    message.setBinaryAttachment(text);
+    message.setDeliveryMode(solace.MessageDeliveryModeType.DIRECT);
+    this.client.send(message);
 
   }
 
@@ -130,6 +159,7 @@ export default class Messaging {
   // Private methods
 
   _connected() {
+    console.log("Yay, connected!");
     this.isConnected = true;
     this.subscribe(`orchestra/p2p/${this.myId}`);
     this.subscribe(`orchestra/broadcast`);
