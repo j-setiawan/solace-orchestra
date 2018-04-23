@@ -84,7 +84,7 @@ class Conductor:
         # Game controller default time offset between when the note is
         # received and when it's played (amount of time it takes for the
         # note to travel down the UI track component)
-        self.game_controller_play_offset_sec = 1.5;
+        self.game_controller_play_offset_sec = 2;
 
         # The length of a quarter note in milli seconds
         # 60 seconds / tempo (beats per minute)
