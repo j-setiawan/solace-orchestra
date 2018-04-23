@@ -58,9 +58,9 @@ function mainLoop() {
       callbacks: {
         connected:     (...args) => connected(...args),
         music_score:   (...args) => receiveMusicScore(...args),
+        start_song:   (...args) => startSong(...args),
         register_response: (...args) => registerResponse(...args),
         reregister: (...args) => reregister(...args),
-        
       }
     }
   );
@@ -88,6 +88,15 @@ function getName() {
   }
 }
 
+function startSong(message) {
+  channelId = message.channel_id;
+  var subscriberTopic = `orchestra/theatre/${theatreId}/${channelId}`;
+  messaging.subscribe(
+    subscriberTopic
+  );
+ 
+}
+
 function enableButtons() {
   document.getElementById("button1").addEventListener("click", () => buttonPress(1));
   document.getElementById("button2").addEventListener("click", () => buttonPress(2));
@@ -101,11 +110,9 @@ function enableButtons() {
 function connected() {
   console.log("Connected.");
   // Subscribe to theatreId and channelId
-  var subscriberTopic = `orchestra/theatre/${theatreId}/${channelId}`;
   messaging.subscribe(
     "orchestra/broadcast",
-    "orchestra/p2p/" + myId,
-    subscriberTopic
+    "orchestra/p2p/" + myId
   );
 }
 
