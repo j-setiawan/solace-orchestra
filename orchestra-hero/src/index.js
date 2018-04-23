@@ -56,7 +56,7 @@ function mainLoop() {
     {
       callbacks: {
         connected:     (...args) => connected(...args),
-        music_score:   (...args) => receiveMusicScore(...args),
+        note_list:   (...args) => receiveMusicScore(...args),
         start_song:   (...args) => startSong(...args),
         register_response: (...args) => registerResponse(...args),
         reregister: (...args) => reregister(...args),
@@ -110,7 +110,7 @@ function connected() {
   );
 }
 
-function receiveMusicScore(message) {
+function receiveMusicScore(topic, message) {
   // Sent by the conductor on a per channel basis to let all musicians know what to play and when to play it
   addTimedSlider(message);
 }
@@ -135,7 +135,7 @@ function publishPlayNoteMessage(messageJSon) {
 
 function publishSpontaneousNoteMessage(messageJSon) {
   // TODO: discuss topic to be used for spontaneous play
-  var publisherTopic = `orchestra/theatre/${theatreId}/${channelId}/note`;
+  var publisherTopic = `orchestra/theatre/${theatreId}/${channelId}`;
   messageJSon.msg_type = "note";
   messaging.sendMessage(publisherTopic, messageJSon);
 }
@@ -152,12 +152,13 @@ function registerMusician(musicianName) {
 }
 
 function addTimedSlider(message) {
+  console.log('got message ', message);
   if (message.hasOwnProperty('note_list')) {
     message.note_list.forEach(function (noteMessage) {
       var currentTime = messaging.getSyncedTime();
       // var timeoutSeconds = noteMessage.play_time - noteMessage.current_time - sliderTimeSecs;
       // if (timeoutSeconds < 1.5) {
-        timeoutSeconds = 1.5;
+      var  timeoutSeconds = 1.5;
  //     }
 
       setTimeout(function () {
@@ -243,7 +244,7 @@ function buttonPress(track) {
         client_id: myId,
         current_time: currentTime,
         msg_type: 'play_note',
-        noteId: slider.message.noteId,
+        note: slider.message.noteId,
         time_offset: timeOffset
       };
       publishPlayNoteMessage(noteMsg);
@@ -264,7 +265,7 @@ function buttonPress(track) {
         {
           program: 0,
           track: track,
-          noteid: noteArray[track - 1],
+          note: noteArray[track - 1],
           channel: 0,
           duration: 750,
           play_time: currentTime
