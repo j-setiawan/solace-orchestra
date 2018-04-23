@@ -6,6 +6,8 @@ const Instruments = require('webaudio-instruments');
 const player = new Instruments();
 const colours = ['#0074d9', '#d83439', '#38b439', '#e9cd54', '#811ed1', '#e66224', '#e041ab'];
 
+let hitNotes = {};
+
 let trackPositions = {};
 const line_spacing = 20;
 const allSliders = [];
@@ -94,20 +96,20 @@ function addSlider(id, channel, track) {
 
 class Symphony {
     constructor() {
+        this.noteHits = {};
         this.messaging = new Messaging(
             {
                 callbacks: {
                     connected: (...args) => this.connected(...args),
-                    register: (...args) => this.rxRegister(...args),
                     start_song: (...args) => this.rxStartSong(...args),
                     stop_song: (...args) => this.rxStopSong(...args),
                     complete_song: (...args) => this.rxCompleteSong(...args),
                     score_update: (...args) => this.rxScoreUpdate(...args),
                     note: (...args) => this.rxNote(...args),
+                    play_note: (...args) => this.rxPlayNote(...args),
                     note_list: (...args) => this.rxNoteList(...args),
                     reregister: (...args) => this.rxRegister(...args),
-                    register_response: () => {
-                    }
+                    register_response: (...args) => this.rxRegisterResponse(...args),
                 }
             }
         );
@@ -119,6 +121,8 @@ class Symphony {
         this.messaging.subscribe(
             "orchestra/theatre/default/+"
         );
+
+        this.rxRegister()
     }
 
     rxRegister(topic, message) {
@@ -129,24 +133,42 @@ class Symphony {
         })
     }
 
+    rxRegisterResponse(topic, message) {
+
+    }
+
     rxStartSong(topic, message) {
         let channelList = Object.keys(message.song_channels).map(function (key) {
             return message.song_channels[key]["channel_id"];
         });
 
         buildTracks(channelList);
+
+        this.messaging.sendResponse(message, {});
+    }
+
+    rxStopSong(topic, message) {
+        buildTracks([0]);
+        hitNotes = {};
     }
 
     rxNote(topic, message) {
         for (let note of message.note_list) {
+            note.current_time = new Date().getMilliseconds();
+            note.play_time = note.current_time;
+            addTimedSlider(note);
             return player.play(
                 note.program,   // instrument: 24 is "Acoustic Guitar (nylon)"
                 note.note,      // note: midi number or frequency in Hz (if > 127)
-                0.2,            // velocity: 0..1
+                0.5,            // velocity: 0..1
                 0,              // delay in seconds
                 0.5,            // duration in seconds
             );
         }
+    }
+
+    rxPlayNote(topic, message) {
+        hitNotes[message.note] = 0;
     }
 
     rxNoteList(topic, message) {
@@ -159,7 +181,7 @@ class Symphony {
                 return player.play(
                     note.program,   // instrument: 24 is "Acoustic Guitar (nylon)"
                     note.note,      // note: midi number or frequency in Hz (if > 127)
-                    0.2,            // velocity: 0..1
+                    hitNotes.hasOwnProperty(note.note_id) ? 0.2 : 0.5,            // velocity: 0..1
                     0,              // delay in seconds
                     0.5,            // duration in seconds
                 )
@@ -169,12 +191,4 @@ class Symphony {
 }
 
 let symphony = new Symphony();
-
-// let demoId = 0;
-//
-// for (let channel of [0, 1, 2, 3]) {
-//     for (let index of colours.keys()) {
-//         addSlider(demoId, channel, index + 1);
-//         demoId ++;
-//     }
-// }
+buildTracks([0]);
