@@ -1,6 +1,5 @@
 import env       from '../../common/env';
 import Messaging from '../../common/messaging';
-import TimeRef from '../../common/TimeRef';
 import '../assets/solaceSymphonyInverted.png';
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -58,19 +57,13 @@ function mainLoop() {
       callbacks: {
         connected:     (...args) => connected(...args),
         music_score:   (...args) => receiveMusicScore(...args),
+        start_song:   (...args) => startSong(...args),
         register_response: (...args) => registerResponse(...args),
         reregister: (...args) => reregister(...args),
-        
       }
     }
   );
-  
-  timeRef = new TimeRef(messaging, 
-    function(){
-      syncReady = true;
-      console.log('Sync Ready');
-    });
-  
+    
   // Start the demo
   addDemoSliders();
 
@@ -88,6 +81,15 @@ function getName() {
   }
 }
 
+function startSong(message) {
+  channelId = message.channel_id;
+  var subscriberTopic = `orchestra/theatre/${theatreId}/${channelId}`;
+  messaging.subscribe(
+    subscriberTopic
+  );
+ 
+}
+
 function enableButtons() {
   document.getElementById("button1").addEventListener("click", () => buttonPress(1));
   document.getElementById("button2").addEventListener("click", () => buttonPress(2));
@@ -101,11 +103,9 @@ function enableButtons() {
 function connected() {
   console.log("Connected.");
   // Subscribe to theatreId and channelId
-  var subscriberTopic = `orchestra/theatre/${theatreId}/${channelId}`;
   messaging.subscribe(
     "orchestra/broadcast",
-    "orchestra/p2p/" + myId,
-    subscriberTopic
+    "orchestra/p2p/" + myId
   );
 }
 
@@ -153,7 +153,7 @@ function registerMusician(musicianName) {
 function addTimedSlider(message) {
   if (message.hasOwnProperty('note_list')) {
     message.note_list.forEach(function (noteMessage) {
-      var currentTime = timeRef.getSyncedTime();
+      var currentTime = messaging.getSyncedTime();
       var timeoutSeconds = noteMessage.play_time - noteMessage.current_time - sliderTimeSecs;
       if (timeoutSeconds < 1.5) {
         timeoutSeconds = 1.5;
@@ -222,7 +222,7 @@ function buttonPress(track) {
   var slider = allSliders[index];
 
   //var currentTime = Date.now();
-  var currentTime = timeRef.getSyncedTime();
+  var currentTime = messaging.getSyncedTime();
 
   if (slider != null) {
     slider.pressed = true;
