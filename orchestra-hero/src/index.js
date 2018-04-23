@@ -1,6 +1,5 @@
 import env       from '../../common/env';
 import Messaging from '../../common/messaging';
-import TimeRef from '../../common/TimeRef';
 import '../assets/solaceSymphonyInverted.png';
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -64,13 +63,7 @@ function mainLoop() {
       }
     }
   );
-  
-  timeRef = new TimeRef(messaging, 
-    function(){
-      syncReady = true;
-      console.log('Sync Ready');
-    });
-  
+    
   // Start the demo
   addDemoSliders();
 
@@ -160,7 +153,7 @@ function registerMusician(musicianName) {
 function addTimedSlider(message) {
   if (message.hasOwnProperty('note_list')) {
     message.note_list.forEach(function (noteMessage) {
-      var currentTime = timeRef.getSyncedTime();
+      var currentTime = messaging.getSyncedTime();
       var timeoutSeconds = noteMessage.play_time - noteMessage.current_time - sliderTimeSecs;
       if (timeoutSeconds < 1.5) {
         timeoutSeconds = 1.5;
@@ -229,7 +222,7 @@ function buttonPress(track) {
   var slider = allSliders[index];
 
   //var currentTime = Date.now();
-  var currentTime = timeRef.getSyncedTime();
+  var currentTime = messaging.getSyncedTime();
 
   if (slider != null) {
     slider.pressed = true;

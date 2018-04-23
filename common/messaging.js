@@ -6,6 +6,8 @@ export default class Messaging {
   
   constructor(opts) {
     this.isConnected    = false;
+    // this.WILDCARD       = "*"; // Wildcard for topic subscriptions in SMF
+    this.WILDCARD       = "+"; // Wildcard for topic subscriptions in MQTT
     this.msgId          = 1;
     this.myId           = Math.random().toString().substr(2);
 
@@ -112,7 +114,21 @@ export default class Messaging {
     return (new Date()).getTime();
   }
   
+  /**
+   * Returns the offset in milliseconds to be added to local time
+   * to get the synchronized reference time
+   */
+  getTimeOffset() {
+    return this.timeoffset;
+  }
   
+  /**
+   * Returns the synchronized reference time
+   */
+  getSyncedTime() {
+    return (new Date()).getTime() + this.timeoffset;
+  }
+
   // Private methods
 
   _connected() {
@@ -161,6 +177,13 @@ export default class Messaging {
     if (msgType === "ping") {
       this.sendResponse(message, {});
     }
+    else if (msgType === "start_song") {
+      // start time sync first, passing the start-song trigger topic and message
+      this.syncRetries = 5;   // sync time sample size
+      this.lowestLat = 500; // lowest latency starting point
+      this.timeoffset = undefined;
+      this._sendTimeRequest(topic, message);
+    }
     else if (msgType.match(/_response/) &&
              this.pendingReplies[msgId]) {
       let info = this.pendingReplies[msgId];
@@ -182,5 +205,30 @@ export default class Messaging {
     return `orchestra/p2p/${clientId}`;
   }
 
+  _sendTimeRequest(startSongTopic, startSongMessage) {
+    this.sendMessage(startSongMessage.time_server_topic,
+      { msg_type: 'ping' },
+      (txMessage, rxMessage) => {
+          this._handleTimeResponse(txMessage, rxMessage, startSongTopic, startSongMessage);
+      });
+  }
+
+  _handleTimeResponse(txMessage, rxMessage, startSongTopic, startSongMessage) {
+      let latency = ((new Date()).getTime() - txMessage.current_time) / 2;
+      console.log('Got ping response! Latency:' + latency + ', Reference time:' + rxMessage.current_time);
+      if (latency < this.lowestLat) {
+          console.log('Updating time offset');
+          this.timeoffset = rxMessage.current_time - ((new Date()).getTime() + txMessage.current_time) / 2;
+          this.lowestLat = latency;
+      }
+      // iterate or call callback when ready
+      if (--this.syncRetries > 0) {
+          this._sendTimeRequest(startSongTopic, startSongMessage);
+      } else {
+          if (this.callbacks.start_song) {
+            this.callbacks.start_song(startSongTopic, startSongMessage);
+          }
+        }
+  }
 }
 

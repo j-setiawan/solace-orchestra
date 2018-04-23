@@ -1,6 +1,5 @@
 import jst       from '../../common/jayesstee';
 import Messaging from '../../common/messaging';
-import TimeRef   from '../../common/timeref';
 import templates from './templates';
 import $         from 'jquery';
 import './style.css';
@@ -15,6 +14,7 @@ class TestClient {
       {
         callbacks: {
           connected:     (...args) => this.connected(...args),
+          start_song:    (...args) => this.rxStartSong(...args),
         }
       }
     );
@@ -29,20 +29,38 @@ class TestClient {
       'orchestra/orchestrabroadcast',
       'orchestra/p2p/' + this.myId,
     );
-    this.timeref = new TimeRef(this.messaging, () => this.time_synced());
+    console.log("Connected, triggering start_song");
+    var publisherTopic = `orchestra/p2p/${this.myId}`;
+    var messageJson = {
+       'msg_type': 'start_song',
+       'client_id': 'ABC',
+       'component_type': 'musician',
+       'name': 'CDE',
+       'time_server_topic': 'orchestra/p2p/dashboard'
+    };
+    this.messaging.sendMessage(publisherTopic, messageJson, (txMessage, rxMessage) => this.response_received(txMessage, rxMessage));
   }
 
-  time_synced() {
+  rxStartSong(topic, message) {
+    console.log("Received start_song message: ", message);
+    this.displayTime();
+    this.messaging.sendResponse(message, {status: 'ok'});
+  }
+
+  displayTime() {
     var AllNodes=document.getElementsByClassName("RealServerTime");
     // format Date and Time 
-    var TimeToString=(new Date(this.timeref.getSyncedTime()).toTimeString().split(' ')[0] + '\n' +
-        'Diff:' + this.timeref.getTimeOffset());
+    var TimeToString=(new Date(this.messaging.getSyncedTime()).toTimeString().split(' ')[0] + '\n' +
+        'Diff:' + this.messaging.getTimeOffset());
     for(var ipos=0;ipos<AllNodes.length;ipos++){
         AllNodes[ipos].innerHTML=TimeToString;
     }
 
-    window.setTimeout(() => {this.time_synced();}, 10);
+    window.setTimeout(() => {this.displayTime();}, 10);
+  }
 
+  response_received(txMessage, rxMessage) {
+    console.log("Response received! Status:" + rxMessage.status);
   }
 }
 
