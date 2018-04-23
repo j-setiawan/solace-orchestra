@@ -1,9 +1,6 @@
 import env       from '../../common/env';
 import Messaging from '../../common/messaging';
-<<<<<<< HEAD
 import TimeRef from '../../common/TimeRef';
-=======
->>>>>>> master
 import '../assets/solaceSymphonyInverted.png';
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -83,11 +80,7 @@ function mainLoop() {
 }
 
 function getName() {
-<<<<<<< HEAD
   musicianName = String($('#musician-name').val());
-=======
-  var musicianName = String($('#musician-name').val());
->>>>>>> master
   if (musicianName !== "") {
     $('#getNameModal').modal('toggle');
     registerMusician(musicianName);
@@ -149,16 +142,10 @@ function publishSpontaneousNoteMessage(messageJSon) {
 function registerMusician(musicianName) {
   var publisherTopic = `orchestra/registration`;
   var messageJson = {
-<<<<<<< HEAD
       msg_type:       'register',
       component_type: 'musician',
      client_id: myId,
      name: musicianName
-=======
-     'client_id': myId,
-     'component_type': 'musician',
-     'name': musicianName
->>>>>>> master
   };
   messaging.sendMessage(publisherTopic, messageJson);
 }
