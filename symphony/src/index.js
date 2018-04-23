@@ -104,6 +104,7 @@ class Symphony {
                     complete_song: (...args) => this.rxCompleteSong(...args),
                     score_update: (...args) => this.rxScoreUpdate(...args),
                     note: (...args) => this.rxNote(...args),
+                    note_list: (...args) => this.rxNoteList(...args),
                     reregister: (...args) => this.rxRegister(...args),
                     register_response: () => {
                     }
@@ -129,14 +130,26 @@ class Symphony {
     }
 
     rxStartSong(topic, message) {
-        let channelList = Object.keys(message.channel_list).map(function (key) {
-            return message.channel_list[key]["channel_id"];
+        let channelList = Object.keys(message.song_channels).map(function (key) {
+            return message.song_channels[key]["channel_id"];
         });
 
         buildTracks(channelList);
     }
 
     rxNote(topic, message) {
+        for (let note of message.note_list) {
+            return player.play(
+                note.program,   // instrument: 24 is "Acoustic Guitar (nylon)"
+                note.note,      // note: midi number or frequency in Hz (if > 127)
+                0.2,            // velocity: 0..1
+                0,              // delay in seconds
+                0.5,            // duration in seconds
+            );
+        }
+    }
+
+    rxNoteList(topic, message) {
         for (let note of message.note_list) {
             let delay = (note.play_time - note.current_time) * 1000 + (sliderTimeSecs * 1000);
 
