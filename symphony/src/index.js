@@ -104,8 +104,7 @@ class Symphony {
                     complete_song: (...args) => this.rxCompleteSong(...args),
                     score_update: (...args) => this.rxScoreUpdate(...args),
                     note: (...args) => this.rxNote(...args),
-                    reregister: () => {
-                    },
+                    reregister: (...args) => this.rxRegister(...args),
                     register_response: () => {
                     }
                 }
@@ -117,9 +116,6 @@ class Symphony {
         console.log("Connected")
 
         this.messaging.subscribe(
-            "orchestra/broadcast",
-            "orchestra/p2p/symphony_0",
-            "orchestra/registration",
             "orchestra/theatre/default/+"
         );
     }
