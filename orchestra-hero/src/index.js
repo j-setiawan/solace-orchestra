@@ -82,12 +82,13 @@ function getName() {
 }
 
 function startSong(message) {
+  console.log("Start song", message.channel_id);
   channelId = message.channel_id;
   var subscriberTopic = `orchestra/theatre/${theatreId}/${channelId}`;
   messaging.subscribe(
     subscriberTopic
   );
- 
+  messaging.sendResponse(message, {}); 
 }
 
 function enableButtons() {
@@ -144,8 +145,8 @@ function registerMusician(musicianName) {
   var messageJson = {
       msg_type:       'register',
       component_type: 'musician',
-     client_id: myId,
-     name: musicianName
+      client_id: myId,
+      name: musicianName
   };
   messaging.sendMessage(publisherTopic, messageJson);
 }
