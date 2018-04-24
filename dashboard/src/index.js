@@ -61,7 +61,8 @@ class Dashboard {
     this.messaging.subscribe(
       "orchestra/broadcast",
       "orchestra/p2p/" + this.myId,
-      "orchestra/registration"
+      "orchestra/registration",
+      "orchestra/theatre/default" // add for now to get complete song message
     );
     this.messaging.sendMessage(`orchestra/broadcast`,
                                {msg_type: "reregister"});
@@ -301,7 +302,7 @@ class Dashboard {
   }
   
   rxCompleteSong(topic, message) {
-    console.log("Received complete_song message: ", message);
+    this.unselectPlayingSong();
   }
   
   rxScoreUpdate(topic, message) {
@@ -388,13 +389,8 @@ class Dashboard {
   }
 
   stopCurrentSong() {
-    this.currentSong.isPlaying = false;
     this.sendStopSongMessage();
-    this.setAllComponentState("idle");
-    this.status.body = `Stopped playing ${this.currentSong.song_name}`;
-    delete this.currentSong;
-    jst.update("status");
-    jst.update("song");
+    this.unselectPlayingSong();
   }
 
   startSong(song) {
@@ -406,6 +402,15 @@ class Dashboard {
     this.currentSong   = song;
     song.isPlaying     = true;
     this.status.body = `${this.currentSong.song_name} is now playing`;
+    jst.update("status");
+    jst.update("song");
+  }
+
+  unselectPlayingSong() {
+    this.currentSong.isPlaying = false;
+    this.setAllComponentState("idle");
+    this.status.body = `Stopped playing ${this.currentSong.song_name}`;
+    delete this.currentSong;
     jst.update("status");
     jst.update("song");
   }

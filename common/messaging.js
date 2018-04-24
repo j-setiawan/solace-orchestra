@@ -37,6 +37,13 @@ export default class Messaging {
     }
   }
 
+  // Remove a list of subscriptions for this client
+  unsubscribe(...subs) {
+    for (let sub of subs) {
+      this.client.unsubscribe(sub);
+    }
+  }
+
   // Send a response to a previously received message
   sendResponse(rxMessage, txMessage) {
     let topic          = this._makeReplyTopic(rxMessage.client_id);
@@ -74,6 +81,10 @@ export default class Messaging {
       console.error("Not yet connected");
     }
 
+    if (txMsg.msg_type !== "ping") {
+      console.log("Sending:", txMsg);
+    }
+    
     if (callback) {
       // Request-reply message
       if (!timeout) {

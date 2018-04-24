@@ -147,11 +147,13 @@ class Conductor:
 
     def onReregister(self, topic, rxMessage):
         # Reply with the original registration message
+        self.registrationMessage = self.makeRegistrationMessage()
         self.solace.sendMessage("orchestra/registration", self.registrationMessage)
         
     def onStartSong(self, topic, rxMessage):
-        songId          = rxMessage['song_id']
-        theatreId       = rxMessage['theatre_id']
+        songId             = rxMessage['song_id']
+        theatreId          = rxMessage['theatre_id']
+        self.currentSongId = songId
 
         self.solace.subscribe("orchestra/theatre/" + str(theatreId))
         self.songThread = threading.Thread(target=self.play_song, args=[songId])
@@ -246,6 +248,16 @@ class Conductor:
                 #print("Topic: " + topic)
                 #print(message_body)
                 self.solace.publish(topic, json.dumps(message_body))
+
+        # Done playing song - just send a complete song to let everyone know
+        time.sleep(self.game_controller_play_offset_sec + 2)
+        topic = "orchestra/theatre/" + self.theatre
+        self.solace.sendMessage(topic, {'msg_type': 'complete_song',
+                                        'song_id':  self.currentSongId})
+        self.song_list[songId]['is_playing'] = 0
+        del self.currentSongId
+        
+        
 
 conductor = Conductor()
 time.sleep(1000000)
