@@ -155,12 +155,15 @@ function addTimedSlider(message) {
   console.log('got message ', message);
   if (message.hasOwnProperty('note_list')) {
     message.note_list.forEach(function (noteMessage) {
-      var currentTime = messaging.getSyncedTime();
-      // var timeoutSeconds = noteMessage.play_time - noteMessage.current_time - sliderTimeSecs;
-      // if (timeoutSeconds < 1.5) {
-      var  timeoutSeconds = 1.5;
- //     }
 
+      // Add the slider 1.5 seconds ahead of time
+      var currentTime = messaging.getSyncedTime();
+      var timeoutSeconds = noteMessage.play_time - currentTime - sliderTimeSecs;
+      if (timeoutSeconds < 0) {
+        timeoutSeconds = 0;
+      }
+
+      console.log('Adding slider to play in ', timeoutSeconds, ' seconds');
       setTimeout(function () {
         addSlider(noteMessage.id, noteMessage.track, noteMessage);
       }, timeoutSeconds * 1000);
