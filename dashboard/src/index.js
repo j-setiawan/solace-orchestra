@@ -453,17 +453,17 @@ class Dashboard {
                                  }, 2000, 4);
     }
 
-    let channelId = 0;
+    let index = 0;
     for (let component of this.musicians) {
       component.state = "waiting";
-      msg.channel_id = song.channel_list[channelId++].channel_id;
+      msg.channel_id = song.channelList[index++].channel_id;
       this.messaging.sendMessage(`orchestra/p2p/${component.client_id}`,
                                  msg,
                                  (txMessage, rxMessage) => {
                                    this.handleStartSongResponse(component, component, rxMessage);
                                  }, 2000, 4);
-      if (channelId >= song.numChannels) {
-        channelId = 0;
+      if (index >= song.channelList.length) {
+        index = 0;
       }
     }
     
