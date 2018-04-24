@@ -57,10 +57,6 @@ export default templates = {
                        templates.pane({name: "status",
                                        title: "Status",
                                        bodyTemplate: templates.statusBody},
-                                      data),
-                       templates.pane({name: "buttons",
-                                       title: "Control",
-                                       bodyTemplate: templates.buttonBody},
                                       data)
                   ),
 

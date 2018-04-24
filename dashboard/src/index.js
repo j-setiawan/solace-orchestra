@@ -248,13 +248,13 @@ class Dashboard {
     else if (component.component_type === "symphony") {
       delete this.symphonyMap[component.name];
       let index = 0;
-      this.symphonys.map((entry, i) => {
+      this.symphonies.map((entry, i) => {
         if (entry.name === component.name) {
           index = i;
           return;
         }
       });
-      this.symphonys.splice(index, 1);
+      this.symphonies.splice(index, 1);
     }
 
     if (component.pingTimer) {
