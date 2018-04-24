@@ -128,7 +128,7 @@ function reregister(message) {
 }
 
 function publishPlayNoteMessage(messageJSon) {
-  var publisherTopic = `orchestra/theatre/${theatreId}/${channelId}/note`;
+  var publisherTopic = `orchestra/theatre/${theatreId}/${channelId}`;
   messageJSon.msg_type = "play_note";
   messaging.sendMessage(publisherTopic, messageJSon);
 }
@@ -247,7 +247,7 @@ function buttonPress(track) {
         client_id: myId,
         current_time: currentTime,
         msg_type: 'play_note',
-        note: slider.message.noteId,
+        note: slider.message.note_id,
         time_offset: timeOffset
       };
       publishPlayNoteMessage(noteMsg);
