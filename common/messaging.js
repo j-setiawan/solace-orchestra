@@ -37,7 +37,7 @@ export default class Messaging {
     }
   }
 
-  // Inject a list of subscriptions for this client
+  // Remove a list of subscriptions for this client
   unsubscribe(...subs) {
     for (let sub of subs) {
       this.client.unsubscribe(sub);
@@ -81,6 +81,10 @@ export default class Messaging {
       console.error("Not yet connected");
     }
 
+    if (txMsg.msg_type !== "ping") {
+      console.log("Sending:", txMsg);
+    }
+    
     if (callback) {
       // Request-reply message
       if (!timeout) {

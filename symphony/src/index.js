@@ -13,10 +13,7 @@ const line_spacing = 20;
 const allSliders = [];
 
 function addTimedSlider(message) {
-    let timeoutSeconds = message.play_time - message.current_time - sliderTimeSecs;
-    if (timeoutSeconds < 1.5) {
-        timeoutSeconds = 1.5;
-    }
+    let timeoutSeconds = message.play_time - message.current_time - (sliderTimeSecs * 1000);
 
     setTimeout(function () {
         addSlider(message.id, message.channel, message.track);
@@ -173,7 +170,7 @@ class Symphony {
 
     rxNoteList(topic, message) {
         for (let note of message.note_list) {
-            let delay = (note.play_time - note.current_time) * 1000 + (sliderTimeSecs * 1000);
+            let delay = (note.play_time - note.current_time) + (sliderTimeSecs * 1000);
 
             addTimedSlider(note);
 
@@ -181,7 +178,7 @@ class Symphony {
                 return player.play(
                     note.program,   // instrument: 24 is "Acoustic Guitar (nylon)"
                     note.note,      // note: midi number or frequency in Hz (if > 127)
-                    hitNotes.hasOwnProperty(note.note_id) ? 0.2 : 0.5,            // velocity: 0..1
+                    hitNotes.hasOwnProperty(note.note_id) ? 0.5 : 0.2,            // velocity: 0..1
                     0,              // delay in seconds
                     0.5,            // duration in seconds
                 )
