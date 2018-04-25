@@ -82,7 +82,7 @@ export default class Messaging {
     }
 
     if (txMsg.msg_type !== "ping") {
-      console.log("Sending:", txMsg);
+      // console.log("Sending:", txMsg);
     }
     
     if (callback) {

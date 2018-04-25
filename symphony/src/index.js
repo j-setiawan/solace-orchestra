@@ -1,9 +1,9 @@
 import './index.scss';
-import Messaging from "../../common/messaging"
+import instrumentDict from "./instruments";
+import Messaging      from "../../common/messaging";
+
 
 const sliderTimeSecs = 1.5;
-const Instruments = require('webaudio-instruments');
-const player = new Instruments();
 const colours = ['#0074d9', '#d83439', '#38b439', '#e9cd54', '#811ed1', '#e66224', '#e041ab'];
 
 let hitNotes = {};
@@ -110,16 +110,40 @@ class Symphony {
                 }
             }
         );
+
+        // Extracted from all current songs
+        // TODO: need to learn this from all conductors at start time rather than
+        // hardcoded
+        const instruments = [0, 4, 16, 22, 24, 25, 26, 27, 28, 29, 30, 33,
+                             35, 47, 48, 52, 56, 60, 68, 70, 71, 73, 74, 95, 120];
+        console.log("Loading " + instruments.length + " instruments...");
+        let lastProgress = 0;
+        MIDI.loadPlugin({
+	    soundfontUrl: "midi/soundfont/MusyngKite/",
+	    instruments: instruments,
+	    onprogress: function(state, progress) {
+                let percent = (progress*100.0).toFixed(0);
+                if (percent - lastProgress > 9) {
+                    console.log("Instrument loading progress: " + percent + "%");
+                    lastProgress = percent;
+                }
+	    },
+	    onsuccess: function() {
+                console.log("Instruments Loaded!");
+	    }
+        });
+                    
+
     }
 
     connected() {
-        console.log("Connected")
+        console.log("Connected to Solace Messaging");
 
         this.messaging.subscribe(
             "orchestra/theatre/default/+"
         );
 
-        this.rxRegister()
+        this.rxRegister();
     }
 
     rxRegister(topic, message) {
@@ -127,7 +151,7 @@ class Symphony {
             'msg_type':       'register',
             'component_type': 'symphony',
             'name':           'symphony_0'
-        })
+        });
     }
 
     rxRegisterResponse(topic, message) {
@@ -135,9 +159,10 @@ class Symphony {
     }
 
     rxStartSong(topic, message) {
-        let channelList = Object.keys(message.song_channels).map(function (key) {
-            return message.song_channels[key]["channel_id"];
-        });
+        let channelList = [];
+        for (let key of Object.keys(message.song_channels)) {
+            channelList.push(message.song_channels[key]["channel_id"]);
+        }
 
         buildTracks(channelList);
 
@@ -154,13 +179,12 @@ class Symphony {
             note.current_time = new Date().getMilliseconds();
             note.play_time = note.current_time;
             addTimedSlider(note);
-            return player.play(
-                note.program,   // instrument: 24 is "Acoustic Guitar (nylon)"
-                note.note,      // note: midi number or frequency in Hz (if > 127)
-                0.5,            // velocity: 0..1
-                0,              // delay in seconds
-                0.5,            // duration in seconds
-            );
+            if (note.program) {
+                MIDI.programChange(note.channel, note.program);
+            }
+            MIDI.setVolume(note.channel, 127);
+	    MIDI.noteOn(note.channel, note.note, 127, 0);
+	    MIDI.noteOff(note.channel, note.note, 0 + 0.5);
         }
     }
 
@@ -170,19 +194,22 @@ class Symphony {
 
     rxNoteList(topic, message) {
         for (let note of message.note_list) {
-            let delay = (note.play_time - note.current_time) + (sliderTimeSecs * 1000);
+            (function(note) {
+                let safeNote = Object.assign({}, note);
+                let delay = (safeNote.play_time - safeNote.current_time) + (sliderTimeSecs * 1000);
 
-            addTimedSlider(note);
+                addTimedSlider(safeNote);
 
-            setTimeout(function () {
-                return player.play(
-                    note.program,   // instrument: 24 is "Acoustic Guitar (nylon)"
-                    note.note,      // note: midi number or frequency in Hz (if > 127)
-                    hitNotes.hasOwnProperty(note.note_id) ? 0.5 : 0.2,            // velocity: 0..1
-                    0,              // delay in seconds
-                    0.5,            // duration in seconds
-                )
-            }, delay);
+                setTimeout(function () {
+                    if (safeNote.program) {
+                        MIDI.programChange(safeNote.channel, safeNote.program);
+                    }
+                    MIDI.setVolume(safeNote.channel, 127);
+	            MIDI.noteOn(safeNote.channel, safeNote.note, hitNotes.hasOwnProperty(note.note_id) ? 63 : 127, 0);
+	            MIDI.noteOff(safeNote.channel, safeNote.note, 0 + 0.5);
+
+                }, delay);
+            })(note);
         }
     }
 }
