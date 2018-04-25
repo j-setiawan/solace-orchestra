@@ -5,10 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:dev": "./node_modules/.bin/webpack --mode development",
-    "build:prod": "./node_modules/.bin/webpack --mode production",
-    "build": "./node_modules/.bin/webpack --mode development",
-    "watch": "./node_modules/.bin/webpack --watch --mode development"
+    "build:dev": "mkdir -p dist; ln -s ../midi dist/midi; ./node_modules/.bin/webpack --mode development",
+    "build:prod": "mkdir -p dist; ln -s ../midi dist/midi; ./node_modules/.bin/webpack --mode production",
+    "build": "mkdir -p dist; ln -s ../midi dist/midi; ./node_modules/.bin/webpack --mode development",
+    "watch": "mkdir -p dist; ln -s ../midi dist/midi; ./node_modules/.bin/webpack --watch --mode development"
   },
   "repository": {
     "type": "git",

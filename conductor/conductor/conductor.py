@@ -23,6 +23,14 @@ def get_unique_notes_in_channel(notes_in_channel):
 
     return sorted(set(all_notes))
     
+def get_unique_instruments_in_channel(notes_in_channel):
+    """ Utility function to get an ordered set of unique instruments in the channel """
+    all_instruments = []
+    for notes in notes_in_channel:
+        all_instruments.append(notes.program)
+
+    return sorted(set(all_instruments))
+    
 class Conductor:
 
     def __init__(self):
@@ -84,7 +92,7 @@ class Conductor:
         # Game controller default time offset between when the note is
         # received and when it's played (amount of time it takes for the
         # note to travel down the UI track component)
-        self.game_controller_play_offset_sec = 1.5;
+        self.game_controller_play_offset_sec = 2;
 
         # The length of a quarter note in milli seconds
         # 60 seconds / tempo (beats per minute)
@@ -95,12 +103,14 @@ class Conductor:
         self.midis     = []
 
         song_id = 0
+        all_instruments = []
         for file in self.midi_files:
             midi = mido.MidiFile(self.midi_file_path + "/" + file)
             name = re.sub('\.mid$', '', file)
             info = {
                 'song_name':     name,
-                'song_channels': []
+                'song_channels': [],
+                'instruments':   []
             }
 
             if (midi.length):
@@ -116,21 +126,25 @@ class Conductor:
                     
                     channelInfo['channel_id']      = channelNum
                     channelInfo['num_notes']       = len(notes)
-                    channelInfo['instrument_name'] = channel.name.strip(),
+                    channelInfo['instrument_name'] = channel.name.strip()
 
                     program_change = next((m for m in channel if m.type == 'program_change'), {'program': 0})
-                    self.channel_instrument[channelNum] = program_change.program
+                    channelInfo['program'] = program_change.program
+                    all_instruments.append(program_change.program)
 
                     info['song_channels'].append(channelInfo)
 
-            info['song_id'] = song_id
-            
+            info['song_id']     = song_id
+
             self.song_list.append(info)
             self.midis.append(midi)
 
             song_id += 1
                     
             print(info);
+        all_instruments = sorted(set(all_instruments))
+        print("All Instruments")
+        print(all_instruments)
                             
     def makeRegistrationMessage(self):
         return {
@@ -147,11 +161,13 @@ class Conductor:
 
     def onReregister(self, topic, rxMessage):
         # Reply with the original registration message
+        self.registrationMessage = self.makeRegistrationMessage()
         self.solace.sendMessage("orchestra/registration", self.registrationMessage)
         
     def onStartSong(self, topic, rxMessage):
-        songId          = rxMessage['song_id']
-        theatreId       = rxMessage['theatre_id']
+        songId             = rxMessage['song_id']
+        theatreId          = rxMessage['theatre_id']
+        self.currentSongId = songId
 
         self.solace.subscribe("orchestra/theatre/" + str(theatreId))
         self.songThread = threading.Thread(target=self.play_song, args=[songId])
@@ -197,6 +213,7 @@ class Conductor:
                 program_change = next((m for m in channel if m.type == 'program_change'), 0)
                 self.channel_instrument[channel_number] = program_change.program
 
+
     def play_song(self, songId):
 
         for song in self.song_list:
@@ -225,7 +242,7 @@ class Conductor:
                 #  current_time: Epoch time in seconds UTC
                 #  play_time: The time the note should be played
                 message_body = {
-                    'msg_type': 'note',
+                    'msg_type': 'note_list',
                     'client_id': self.unique_id,
                     'msg_id': self.unique_id,
                     'current_time': current_time,
@@ -246,6 +263,16 @@ class Conductor:
                 #print("Topic: " + topic)
                 #print(message_body)
                 self.solace.publish(topic, json.dumps(message_body))
+
+        # Done playing song - just send a complete song to let everyone know
+        time.sleep(self.game_controller_play_offset_sec + 2)
+        topic = "orchestra/theatre/" + self.theatre
+        self.solace.sendMessage(topic, {'msg_type': 'complete_song',
+                                        'song_id':  self.currentSongId})
+        self.song_list[songId]['is_playing'] = 0
+        del self.currentSongId
+        
+        
 
 conductor = Conductor()
 time.sleep(1000000)

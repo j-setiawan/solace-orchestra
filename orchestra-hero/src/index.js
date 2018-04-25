@@ -1,6 +1,5 @@
 import env       from '../../common/env';
 import Messaging from '../../common/messaging';
-import TimeRef from '../../common/TimeRef';
 import '../assets/solaceSymphonyInverted.png';
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -57,25 +56,24 @@ function mainLoop() {
     {
       callbacks: {
         connected:     (...args) => connected(...args),
-        music_score:   (...args) => receiveMusicScore(...args),
+        note_list:   (...args) => receiveMusicScore(...args),
+        start_song:   (...args) => startSong(...args),
+        stop_song:   (...args) => stopSong(...args),
         register_response: (...args) => registerResponse(...args),
         reregister: (...args) => reregister(...args),
-        
       }
     }
   );
-  
-  timeRef = new TimeRef(messaging, 
-    function(){
-      syncReady = true;
-      console.log('Sync Ready');
-    });
-  
+    
   // Start the demo
   addDemoSliders();
 
   // Show the "get name" modal
-  setTimeout(() => $('#getNameModal').modal('toggle'), 3200);
+  setTimeout(() => {
+    $('#getNameModal').modal('toggle');
+    $('#lines').hide();
+    $('#buttons').hide();
+  }, 3200);
   $('#submitName').click(() => getName());
 }
 
@@ -84,8 +82,29 @@ function getName() {
   if (musicianName !== "") {
     $('#getNameModal').modal('toggle');
     registerMusician(musicianName);
+    $('#lines').show();
+    $('#buttons').show();
     enableButtons();
   }
+}
+
+function startSong(topic, message) {
+  console.log("Start song ", topic, message);
+  var subscriberTopic = `orchestra/theatre/${theatreId}/${channelId}`;
+  messaging.subscribe(
+    subscriberTopic
+  );
+  messaging.sendResponse(message, {}); 
+}
+
+function stopSong(topic, message) {
+  console.log("Stop song ", topic, message);
+  channelId = message.channel_id;
+  var subscriberTopic = `orchestra/theatre/${theatreId}/${channelId}`;
+  messaging.unsubscribe(
+    subscriberTopic
+  );
+  messaging.sendResponse(message, {}); 
 }
 
 function enableButtons() {
@@ -101,15 +120,13 @@ function enableButtons() {
 function connected() {
   console.log("Connected.");
   // Subscribe to theatreId and channelId
-  var subscriberTopic = `orchestra/theatre/${theatreId}/${channelId}`;
   messaging.subscribe(
     "orchestra/broadcast",
-    "orchestra/p2p/" + myId,
-    subscriberTopic
+    "orchestra/p2p/" + myId
   );
 }
 
-function receiveMusicScore(message) {
+function receiveMusicScore(topic, message) {
   // Sent by the conductor on a per channel basis to let all musicians know what to play and when to play it
   addTimedSlider(message);
 }
@@ -127,15 +144,15 @@ function reregister(message) {
 }
 
 function publishPlayNoteMessage(messageJSon) {
-  var publisherTopic = `orchestra/theatre/${theatreId}/${channelId}/note`;
+  var publisherTopic = `orchestra/theatre/${theatreId}/${channelId}`;
   messageJSon.msg_type = "play_note";
   messaging.sendMessage(publisherTopic, messageJSon);
 }
 
 function publishSpontaneousNoteMessage(messageJSon) {
   // TODO: discuss topic to be used for spontaneous play
-  var publisherTopic = `orchestra/theatre/${theatreId}/${channelId}/note`;
-  messageJSon.msg_type = "music_score";
+  var publisherTopic = `orchestra/theatre/${theatreId}/${channelId}`;
+  messageJSon.msg_type = "note";
   messaging.sendMessage(publisherTopic, messageJSon);
 }
 
@@ -144,21 +161,25 @@ function registerMusician(musicianName) {
   var messageJson = {
       msg_type:       'register',
       component_type: 'musician',
-     client_id: myId,
-     name: musicianName
+      client_id: myId,
+      name: musicianName
   };
   messaging.sendMessage(publisherTopic, messageJson);
 }
 
 function addTimedSlider(message) {
+  console.log('got message ', message);
   if (message.hasOwnProperty('note_list')) {
     message.note_list.forEach(function (noteMessage) {
-      var currentTime = timeRef.getSyncedTime();
-      var timeoutSeconds = noteMessage.play_time - noteMessage.current_time - sliderTimeSecs;
-      if (timeoutSeconds < 1.5) {
-        timeoutSeconds = 1.5;
+
+      // Add the slider 1.5 seconds ahead of time
+      var currentTime = messaging.getSyncedTime();
+      var timeoutSeconds = noteMessage.play_time - currentTime - sliderTimeSecs;
+      if (timeoutSeconds < 0) {
+        timeoutSeconds = 0;
       }
 
+      console.log('Adding slider to play in ', timeoutSeconds, ' seconds');
       setTimeout(function () {
         addSlider(noteMessage.id, noteMessage.track, noteMessage);
       }, timeoutSeconds * 1000);
@@ -222,7 +243,7 @@ function buttonPress(track) {
   var slider = allSliders[index];
 
   //var currentTime = Date.now();
-  var currentTime = timeRef.getSyncedTime();
+  var currentTime = messaging.getSyncedTime();
 
   if (slider != null) {
     slider.pressed = true;
@@ -242,7 +263,7 @@ function buttonPress(track) {
         client_id: myId,
         current_time: currentTime,
         msg_type: 'play_note',
-        noteId: slider.message.noteId,
+        note: slider.message.note_id,
         time_offset: timeOffset
       };
       publishPlayNoteMessage(noteMsg);
@@ -258,12 +279,12 @@ function buttonPress(track) {
     var spontaneousNote = {
       client_id: myId,
       current_time: currentTime,
-      msg_type: 'play_note',
+      msg_type: 'note',
       note_list: [
         {
           program: 0,
           track: track,
-          noteid: noteArray[track - 1],
+          note: noteArray[track - 1],
           channel: 0,
           duration: 750,
           play_time: currentTime

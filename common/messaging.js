@@ -57,6 +57,18 @@ export default class Messaging {
     }
   }
 
+  // Remove a list of subscriptions for this client
+  unsubscribe(...topic) {
+    for (let topic of topics) {
+      this.client.unsubscribe( solace.SolclientFactory.createTopicDestination(topic),
+        //true, // request confirmation
+        false,
+        topic, // correlation key so we know which subscription suceedes
+        1000 // subscribe timeout
+      );
+    }
+  }
+
   // Send a response to a previously received message
   sendResponse(rxMessage, txMessage) {
     let topic          = this._makeReplyTopic(rxMessage.client_id);
@@ -94,6 +106,10 @@ export default class Messaging {
       console.error("Not yet connected");
     }
 
+    if (txMsg.msg_type !== "ping") {
+      // console.log("Sending:", txMsg);
+    }
+    
     if (callback) {
       // Request-reply message
       if (!timeout) {

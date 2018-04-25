@@ -61,7 +61,8 @@ class Dashboard {
     this.messaging.subscribe(
       "orchestra/broadcast",
       "orchestra/p2p/" + this.myId,
-      "orchestra/registration"
+      "orchestra/registration",
+      "orchestra/theatre/default" // add for now to get complete song message
     );
     this.messaging.sendMessage(`orchestra/broadcast`,
                                {msg_type: "reregister"});
@@ -248,13 +249,13 @@ class Dashboard {
     else if (component.component_type === "symphony") {
       delete this.symphonyMap[component.name];
       let index = 0;
-      this.symphonys.map((entry, i) => {
+      this.symphonies.map((entry, i) => {
         if (entry.name === component.name) {
           index = i;
           return;
         }
       });
-      this.symphonys.splice(index, 1);
+      this.symphonies.splice(index, 1);
     }
 
     if (component.pingTimer) {
@@ -301,7 +302,7 @@ class Dashboard {
   }
   
   rxCompleteSong(topic, message) {
-    console.log("Received complete_song message: ", message);
+    this.unselectPlayingSong();
   }
   
   rxScoreUpdate(topic, message) {
@@ -388,13 +389,8 @@ class Dashboard {
   }
 
   stopCurrentSong() {
-    this.currentSong.isPlaying = false;
     this.sendStopSongMessage();
-    this.setAllComponentState("idle");
-    this.status.body = `Stopped playing ${this.currentSong.song_name}`;
-    delete this.currentSong;
-    jst.update("status");
-    jst.update("song");
+    this.unselectPlayingSong();
   }
 
   startSong(song) {
@@ -406,6 +402,15 @@ class Dashboard {
     this.currentSong   = song;
     song.isPlaying     = true;
     this.status.body = `${this.currentSong.song_name} is now playing`;
+    jst.update("status");
+    jst.update("song");
+  }
+
+  unselectPlayingSong() {
+    this.currentSong.isPlaying = false;
+    this.setAllComponentState("idle");
+    this.status.body = `Stopped playing ${this.currentSong.song_name}`;
+    delete this.currentSong;
     jst.update("status");
     jst.update("song");
   }
@@ -453,17 +458,17 @@ class Dashboard {
                                  }, 2000, 4);
     }
 
-    let channelId = 0;
+    let index = 0;
     for (let component of this.musicians) {
       component.state = "waiting";
-      msg.channel_id = song.channel_list[channelId++].channel_id;
+      msg.channel_id = song.channelList[index++].channel_id;
       this.messaging.sendMessage(`orchestra/p2p/${component.client_id}`,
                                  msg,
                                  (txMessage, rxMessage) => {
                                    this.handleStartSongResponse(component, component, rxMessage);
                                  }, 2000, 4);
-      if (channelId >= song.numChannels) {
-        channelId = 0;
+      if (index >= song.channelList.length) {
+        index = 0;
       }
     }
     
