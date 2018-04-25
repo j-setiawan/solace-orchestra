@@ -69,7 +69,11 @@ function mainLoop() {
   addDemoSliders();
 
   // Show the "get name" modal
-  setTimeout(() => $('#getNameModal').modal('toggle'), 3200);
+  setTimeout(() => {
+    $('#getNameModal').modal('toggle');
+    $('#lines').hide();
+    $('#buttons').hide();
+  }, 3200);
   $('#submitName').click(() => getName());
 }
 
@@ -78,6 +82,8 @@ function getName() {
   if (musicianName !== "") {
     $('#getNameModal').modal('toggle');
     registerMusician(musicianName);
+    $('#lines').show();
+    $('#buttons').show();
     enableButtons();
   }
 }
