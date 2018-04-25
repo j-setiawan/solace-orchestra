@@ -37,6 +37,13 @@ export default class Messaging {
     }
   }
 
+  // Inject a list of subscriptions for this client
+  unsubscribe(...subs) {
+    for (let sub of subs) {
+      this.client.unsubscribe(sub);
+    }
+  }
+
   // Send a response to a previously received message
   sendResponse(rxMessage, txMessage) {
     let topic          = this._makeReplyTopic(rxMessage.client_id);

@@ -366,3 +366,16 @@ div#buttons {
   left: 165px;
   top: -5px;
 }
+
+// Change the modal padding to make it smaller
+.modal-footer {
+  padding: 5px;
+}
+
+.modal-body {
+  padding: 5px;
+}
+
+.modal-content {
+  z-index: 1000;
+}

@@ -58,6 +58,7 @@ function mainLoop() {
         connected:     (...args) => connected(...args),
         note_list:   (...args) => receiveMusicScore(...args),
         start_song:   (...args) => startSong(...args),
+        stop_song:   (...args) => stopSong(...args),
         register_response: (...args) => registerResponse(...args),
         reregister: (...args) => reregister(...args),
       }
@@ -83,9 +84,18 @@ function getName() {
 
 function startSong(topic, message) {
   console.log("Start song ", topic, message);
-  channelId = message.channel_id;
   var subscriberTopic = `orchestra/theatre/${theatreId}/${channelId}`;
   messaging.subscribe(
+    subscriberTopic
+  );
+  messaging.sendResponse(message, {}); 
+}
+
+function stopSong(topic, message) {
+  console.log("Stop song ", topic, message);
+  channelId = message.channel_id;
+  var subscriberTopic = `orchestra/theatre/${theatreId}/${channelId}`;
+  messaging.unsubscribe(
     subscriberTopic
   );
   messaging.sendResponse(message, {}); 
