@@ -58,6 +58,7 @@ function mainLoop() {
         connected:     (...args) => connected(...args),
         note_list:   (...args) => receiveMusicScore(...args),
         start_song:   (...args) => startSong(...args),
+        stop_song:   (...args) => stopSong(...args),
         register_response: (...args) => registerResponse(...args),
         reregister: (...args) => reregister(...args),
       }
@@ -68,7 +69,11 @@ function mainLoop() {
   addDemoSliders();
 
   // Show the "get name" modal
-  setTimeout(() => $('#getNameModal').modal('toggle'), 3200);
+  setTimeout(() => {
+    $('#getNameModal').modal('toggle');
+    $('#lines').hide();
+    $('#buttons').hide();
+  }, 3200);
   $('#submitName').click(() => getName());
 }
 
@@ -77,15 +82,26 @@ function getName() {
   if (musicianName !== "") {
     $('#getNameModal').modal('toggle');
     registerMusician(musicianName);
+    $('#lines').show();
+    $('#buttons').show();
     enableButtons();
   }
 }
 
 function startSong(topic, message) {
   console.log("Start song ", topic, message);
-  channelId = message.channel_id;
   var subscriberTopic = `orchestra/theatre/${theatreId}/${channelId}`;
   messaging.subscribe(
+    subscriberTopic
+  );
+  messaging.sendResponse(message, {}); 
+}
+
+function stopSong(topic, message) {
+  console.log("Stop song ", topic, message);
+  channelId = message.channel_id;
+  var subscriberTopic = `orchestra/theatre/${theatreId}/${channelId}`;
+  messaging.unsubscribe(
     subscriberTopic
   );
   messaging.sendResponse(message, {}); 
