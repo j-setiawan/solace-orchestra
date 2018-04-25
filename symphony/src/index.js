@@ -1,5 +1,4 @@
 import './index.scss';
-import instrumentDict from "./instruments";
 import Messaging      from "../../common/messaging";
 
 
