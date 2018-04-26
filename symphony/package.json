@@ -22,12 +22,12 @@
   },
   "homepage": "",
   "dependencies": {
-    "mqtt": "^2.17.0",
     "node-sass": "^4.8.3",
     "sass-loader": "^6.0.7",
     "webaudio-instruments": "^0.4.1",
     "webpack": "^4.1.1",
-    "webpack-cli": "^2.0.11"
+    "webpack-cli": "^2.0.11",
+    "exports-loader": "^0.7.0"
   },
   "devDependencies": {
     "css-loader": "^0.28.11",
