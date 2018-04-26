@@ -174,7 +174,8 @@ function addTimedSlider(message) {
 
       // Add the slider 1.5 seconds ahead of time
       var currentTime = messaging.getSyncedTime();
-      var timeoutSeconds = noteMessage.play_time - currentTime - sliderTimeSecs;
+      var latencyToSymphony = 100;
+      var timeoutSeconds = noteMessage.play_time - currentTime - sliderTimeSecs - latencyToSymphony;
       if (timeoutSeconds < 0) {
         timeoutSeconds = 0;
       }
