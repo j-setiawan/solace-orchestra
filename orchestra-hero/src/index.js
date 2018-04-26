@@ -63,8 +63,11 @@ function mainLoop() {
         reregister: (...args) => reregister(...args),
       }
     }
+
   );
     
+  myId = messaging.myId;
+
   // Start the demo
   addDemoSliders();
 
