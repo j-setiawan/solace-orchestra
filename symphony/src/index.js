@@ -115,6 +115,10 @@ class Symphony {
         // hardcoded
         const instruments = [0, 4, 16, 22, 24, 25, 26, 27, 28, 29, 30, 33,
                              35, 47, 48, 52, 56, 60, 68, 70, 71, 73, 74, 95, 120];
+
+        // How much we penalize notes that weren't hit
+        this.velocityDerateFactor = 1;
+        
         console.log("Loading " + instruments.length + " instruments...");
         let lastProgress = 0;
         MIDI.loadPlugin({
@@ -191,7 +195,8 @@ class Symphony {
         hitNotes[message.note] = 0;
     }
 
-    rxNoteList(topic, message) {
+    rxNoteList2(topic, message) {
+        console.log(message);
         for (let note of message.note_list) {
             (function(note) {
                 let safeNote = Object.assign({}, note);
@@ -204,13 +209,38 @@ class Symphony {
                         MIDI.programChange(safeNote.channel, safeNote.program);
                     }
                     MIDI.setVolume(safeNote.channel, 127);
-	            MIDI.noteOn(safeNote.channel, safeNote.note, hitNotes.hasOwnProperty(note.note_id) ? 63 : 127, 0);
-	            MIDI.noteOff(safeNote.channel, safeNote.note, 0 + 0.5);
+	            MIDI.noteOn(safeNote.channel, safeNote.note, hitNotes.hasOwnProperty(note.note_id) ? 127 : 30, 0);
+	            MIDI.noteOff(safeNote.channel, safeNote.note, safeNote.duration/1000);
 
                 }, delay);
             })(note);
         }
     }
+
+    rxNoteList(topic, message) {
+        // console.log(message);
+        let self = this;
+        for (let note of message.note_list) {
+            (function(note) {
+                let safeNote = Object.assign({}, note);
+                let delay = (safeNote.play_time - self.messaging.getTime()) + (sliderTimeSecs * 1000);
+
+                //addTimedSlider(safeNote);
+
+                setTimeout(function () {
+                    if (safeNote.program) {
+                        MIDI.programChange(safeNote.channel, safeNote.program);
+                    }
+                    MIDI.setVolume(safeNote.channel, 127);
+	            MIDI.noteOn(safeNote.channel, safeNote.note, hitNotes.hasOwnProperty(note.note_id) ? safeNote.velocity : safeNote.velocity/self.velocityDerateFactor, 0);
+	            MIDI.noteOff(safeNote.channel, safeNote.note, safeNote.duration/1000);
+
+                }, delay);
+            })(note);
+        }
+    }
+
+    
 }
 
 let symphony = new Symphony();

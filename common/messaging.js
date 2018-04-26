@@ -228,9 +228,9 @@ export default class Messaging {
       let latency = ((new Date()).getTime() - txMessage.current_time) / 2;
       console.log('Got ping response! Latency:' + latency + ', Reference time:' + rxMessage.current_time);
       if (latency < this.lowestLat) {
-          console.log('Updating time offset');
           this.timeoffset = rxMessage.current_time - ((new Date()).getTime() + txMessage.current_time) / 2;
           this.lowestLat = latency;
+          console.log('Updating time offset:', this.timeoffset, latency);
       }
       // iterate or call callback when ready
       if (--this.syncRetries > 0) {
