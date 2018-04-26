@@ -1,11 +1,17 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const solclientjs = path.resolve(__dirname, '../common/solclient-debug.js');
 
 module.exports = {
     entry: './src/index.js',
     output: {
         filename: 'bundle.js',
         path: path.resolve(__dirname, 'dist')
+    },
+    resolve: {
+      alias: {
+        solclientjs$: solclientjs
+      }
     },
     plugins: [
         new HtmlWebpackPlugin({
@@ -37,6 +43,10 @@ module.exports = {
                 use: [
                     'file-loader'
                 ]
+            },
+            {
+              test: require.resolve(solclientjs),
+              use: 'exports-loader?window.solace'
             }
             ]
     }

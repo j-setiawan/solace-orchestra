@@ -11,12 +11,14 @@ let trackPositions = {};
 const line_spacing = 20;
 const allSliders = [];
 
+const timeouts = [];
+
 function addTimedSlider(message) {
     let timeoutSeconds = message.play_time - message.current_time - (sliderTimeSecs * 1000);
 
-    setTimeout(function () {
+    timeouts.push(setTimeout(function () {
         addSlider(message.id, message.channel, message.track);
-    }, timeoutSeconds * 1000);
+    }, timeoutSeconds * 1000));
 }
 
 function buildTracks(channel_list) {
@@ -75,23 +77,24 @@ function addSlider(id, channel, track) {
     allSliders.push(slider);
 
     // Remove the slider after it hits the end
-    setTimeout(function () {
+    timeouts.push(setTimeout(function () {
         slider.element.remove();
         slider.removeTime = Date.now();
         slider = {};
-    }, sliderTimeSecs * 1000);
+    }, sliderTimeSecs * 1000));
 
     // Remove the event
-    setTimeout(function () {
+    timeouts.push(setTimeout(function () {
         let index = allSliders.map(function (s) {
             return s.id;
         }).indexOf(id);
         allSliders.splice(index, 1);
-    }, sliderTimeSecs * 1000 + 200);
+    }, sliderTimeSecs * 1000 + 200));
 }
 
 class Symphony {
     constructor() {
+        this.id = uuid();
         this.noteHits = {};
         this.messaging = new Messaging(
             {
@@ -118,7 +121,7 @@ class Symphony {
 
         // How much we penalize notes that weren't hit
         this.velocityDerateFactor = 1;
-        
+
         console.log("Loading " + instruments.length + " instruments...");
         let lastProgress = 0;
         MIDI.loadPlugin({
@@ -153,7 +156,7 @@ class Symphony {
         this.messaging.sendMessage("orchestra/registration", {
             'msg_type':       'register',
             'component_type': 'symphony',
-            'name':           'symphony_0'
+            'name':           'symphony_' + this.id
         });
     }
 
@@ -175,6 +178,17 @@ class Symphony {
     rxStopSong(topic, message) {
         buildTracks([0]);
         hitNotes = {};
+
+        while(timeouts.length > 0) {
+            clearTimeout(timeouts.pop());
+        }
+
+        while(allSliders.length > 0) {
+            let slider = allSliders.pop();
+            slider.element.remove();
+            slider.removeTime = Date.now();
+            slider = {};
+        }
     }
 
     rxNote(topic, message) {
@@ -204,15 +218,15 @@ class Symphony {
 
                 addTimedSlider(safeNote);
 
-                setTimeout(function () {
+                timeouts.push(setTimeout(function () {
                     if (safeNote.program) {
                         MIDI.programChange(safeNote.channel, safeNote.program);
                     }
                     MIDI.setVolume(safeNote.channel, 127);
-	            MIDI.noteOn(safeNote.channel, safeNote.note, hitNotes.hasOwnProperty(note.note_id) ? 127 : 30, 0);
-	            MIDI.noteOff(safeNote.channel, safeNote.note, safeNote.duration/1000);
+                    MIDI.noteOn(safeNote.channel, safeNote.note, hitNotes.hasOwnProperty(note.note_id) ? 127 : 30, 0);
+                    MIDI.noteOff(safeNote.channel, safeNote.note, safeNote.duration/1000);
 
-                }, delay);
+                }, delay));
             })(note);
         }
     }
@@ -232,15 +246,21 @@ class Symphony {
                         MIDI.programChange(safeNote.channel, safeNote.program);
                     }
                     MIDI.setVolume(safeNote.channel, 127);
-	            MIDI.noteOn(safeNote.channel, safeNote.note, hitNotes.hasOwnProperty(note.note_id) ? safeNote.velocity : safeNote.velocity/self.velocityDerateFactor, 0);
-	            MIDI.noteOff(safeNote.channel, safeNote.note, safeNote.duration/1000);
-
+                    MIDI.noteOn(safeNote.channel, safeNote.note, hitNotes.hasOwnProperty(note.note_id) ? safeNote.velocity : safeNote.velocity/self.velocityDerateFactor, 0);
+                    MIDI.noteOff(safeNote.channel, safeNote.note, safeNote.duration/1000);
                 }, delay);
             })(note);
         }
     }
 
-    
+
+}
+
+function uuid() {
+    return 'xxxxxxxx'.replace(/[x]/g, function(c) {
+        let r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
 }
 
 let symphony = new Symphony();
