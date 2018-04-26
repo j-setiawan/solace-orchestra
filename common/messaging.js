@@ -174,6 +174,13 @@ export default class Messaging {
     return (new Date()).getTime() + this.timeoffset;
   }
 
+  /**
+   * Returns the suggested latency to symphony (assuming the same as conductor)
+   */
+  getLatency() {
+    return this.lowestLat * 1.2;
+  }
+
   // Private methods
 
   _connected() {
