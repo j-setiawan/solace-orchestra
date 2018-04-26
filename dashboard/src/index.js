@@ -484,7 +484,7 @@ class Dashboard {
       song_id:        this.currentSong.song_id,
       song_name:      this.currentSong.song_name
     };
-    let topic = `orchestra/theatre/${this.theatreId}`;
+    let topic = `orchestra/theatre/default`;
     this.messaging.sendMessage(topic, msg);
   }
 

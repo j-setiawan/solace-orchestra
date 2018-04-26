@@ -146,7 +146,8 @@ class Symphony {
         console.log("Connected to Solace Messaging");
 
         this.messaging.subscribe(
-            "orchestra/theatre/default/+"
+            "orchestra/theatre/default",
+            "orchestra/theatre/default/" + this.messaging.WILDCARD
         );
 
         this.rxRegister();
@@ -232,7 +233,7 @@ class Symphony {
     }
 
     rxNoteList(topic, message) {
-        // console.log(message);
+        console.log(message);
         let self = this;
         for (let note of message.note_list) {
             (function(note) {
@@ -241,14 +242,14 @@ class Symphony {
 
                 //addTimedSlider(safeNote);
 
-                setTimeout(function () {
+                timeouts.push(setTimeout(function () {
                     if (safeNote.program) {
                         MIDI.programChange(safeNote.channel, safeNote.program);
                     }
                     MIDI.setVolume(safeNote.channel, 127);
                     MIDI.noteOn(safeNote.channel, safeNote.note, hitNotes.hasOwnProperty(note.note_id) ? safeNote.velocity : safeNote.velocity/self.velocityDerateFactor, 0);
                     MIDI.noteOff(safeNote.channel, safeNote.note, safeNote.duration/1000);
-                }, delay);
+                }, delay));
             })(note);
         }
     }
