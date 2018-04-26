@@ -51,7 +51,7 @@ class TestClient {
     var AllNodes=document.getElementsByClassName("RealServerTime");
     // format Date and Time 
     var TimeToString=(new Date(this.messaging.getSyncedTime()).toTimeString().split(' ')[0] + '\n' +
-        'Diff:' + this.messaging.getTimeOffset());
+        'Diff:' + this.messaging.getTimeOffset()) + '  Latency:' + this.messaging.getLatency();
     for(var ipos=0;ipos<AllNodes.length;ipos++){
         AllNodes[ipos].innerHTML=TimeToString;
     }

@@ -90,6 +90,7 @@ function getName() {
 
 function startSong(topic, message) {
   console.log("Start song ", topic, message);
+  channelId = message.channel_id;
   var subscriberTopic = `orchestra/theatre/${theatreId}/${channelId}`;
   messaging.subscribe(
     subscriberTopic
