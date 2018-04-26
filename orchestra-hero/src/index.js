@@ -19,6 +19,8 @@ var score = 0;
 var sliderTimeSecs = 1.5;
 var publisher = {};
 
+var sliderTimeouts = [];
+
 // Midi note to play when the button is pressed for a track
 // Track is the offset, note is the value;
 var noteArray = [60, 62, 64, 65, 67, 69, 71];
@@ -63,8 +65,11 @@ function mainLoop() {
         reregister: (...args) => reregister(...args),
       }
     }
+
   );
     
+  myId = messaging.myId;
+
   // Start the demo
   addDemoSliders();
 
@@ -105,7 +110,11 @@ function stopSong(topic, message) {
   messaging.unsubscribe(
     subscriberTopic
   );
-  messaging.sendResponse(message, {}); 
+  messaging.sendResponse(message, {});
+
+  // Cleanup existing notes
+  sliderTimeouts.forEach(timeout => clearTimeout(timeout));
+  sliderTimeouts = [];
 }
 
 function enableButtons() {
@@ -176,15 +185,15 @@ function addTimedSlider(message) {
       // Add the slider 1.5 seconds ahead of time
       var currentTime = messaging.getSyncedTime();
       var latencyToSymphony = 100;
-      var timeoutSeconds = noteMessage.play_time - currentTime - sliderTimeSecs - latencyToSymphony;
+      var timeoutSeconds = noteMessage.play_time - currentTime - (sliderTimeSecs * 1000) - latencyToSymphony;
       if (timeoutSeconds < 0) {
         timeoutSeconds = 0;
       }
 
       console.log('Adding slider to play in ', timeoutSeconds, ' seconds');
-      setTimeout(function () {
+      sliderTimeouts.push(setTimeout(function () {
         addSlider(noteMessage.id, noteMessage.track, noteMessage);
-      }, timeoutSeconds * 1000);
+      }, timeoutSeconds * 1000));
     });
   }
 }
