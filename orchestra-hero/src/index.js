@@ -200,7 +200,11 @@ function buildSlider(id, track, message) {
   slider.track = track;
   slider.id = id;
   slider.message = message;
-  slider.pressed = false;
+  if (message !== undefined) {
+    slider.pressed = false;
+  } else {
+    slider.pressed = true;
+  }
   slider.element.className +=
     "slider slider-anim-" + track + " track" + track + " shape color" + track;
 
