@@ -268,6 +268,10 @@ class Dashboard {
 
   handlePingResponse(component, txMessage, rxMessage) {
     let latency;
+    if (component.client_id !== rxMessage.client_id) {
+      return;
+    }
+
     if (rxMessage.status === "timeout") {
       component.pingsMissed++;
       latency = "?";
