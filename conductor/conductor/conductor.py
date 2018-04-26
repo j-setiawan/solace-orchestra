@@ -47,9 +47,6 @@ class Conductor:
         # The list of midi filenames
         self.midi_files = self.get_midi_files(self.midi_file_path)
 
-        # Parse midi files
-        self.parseMidiFiles()
-
         # Topic format = orchestra/theatre/default
         # orchestra - constant
         # theatre - the "room" that the song is played in. Default value is 'default'
@@ -69,12 +66,6 @@ class Conductor:
         def onStopSong(*args):
             self.onStopSong(*args)
         
-        # Create and initialize solace messaging client
-        self.solace = SolaceMQTTClient(callbacks={'connect': onConnect,
-                                                  'start_song': onStartSong,
-                                                  'stop_song': onStopSong,
-                                                  'reregister': onReregister})
-
         # Unique id assigned to each message (note)
         self.unique_id = 0
 
@@ -92,15 +83,28 @@ class Conductor:
         # Game controller default time offset between when the note is
         # received and when it's played (amount of time it takes for the
         # note to travel down the UI track component)
-        self.game_controller_play_offset_sec = 2;
+        self.game_controller_play_offset_sec  = 2;
+        self.game_controller_play_offset_msec = 2000;
 
         # The length of a quarter note in milli seconds
         # 60 seconds / tempo (beats per minute)
         self.quarterNoteLength = 60/80*1000;
 
+        # Parse midi files
+        self.parseMidiFiles()
+
+        # Create and initialize solace messaging client
+        self.solace = SolaceMQTTClient(callbacks={'connect': onConnect,
+                                                  'start_song': onStartSong,
+                                                  'stop_song': onStopSong,
+                                                  'reregister': onReregister})
+
+
+
     def parseMidiFiles(self):
-        self.song_list = []
-        self.midis     = []
+        self.song_list      = []
+        self.song_list_full = []
+        self.midis          = []
 
         song_id = 0
         all_instruments = []
@@ -112,38 +116,109 @@ class Conductor:
                 'song_channels': [],
                 'instruments':   []
             }
+            fullNotesPerChannel = []
 
             if (midi.length):
                 info['song_length'] = math.ceil(midi.length)
 
-            for channel_id in range(len(midi.tracks)):
-                channel = midi.tracks[channel_id]
-                notes = [n for n in channel if n.type == "note_on"]
+            tempoList = []
+            for channelIdx in range(len(midi.tracks)):
 
+                channel     = midi.tracks[channelIdx]
+                currentTick = 0
+                currentTime = 0.0
+                noteStart   = {}
+                tempoIdx    = 0
+                program     = 0
+
+                # Default to 500000, but override with learned tempo if present
+                tempo       = 500000
+                if len(tempoList):
+                    tempo = tempoList[0][1]
+
+                # Loop through all the messages and learn the start and duration of all notes
+                notes = []
+                for msg in channel:
+                    #print(msg)
+
+                    currentTime = currentTime + mido.tick2second(msg.time, midi.ticks_per_beat, tempo)
+                    currentTick = currentTick + msg.time
+
+                    # Adjust tempo as we go along
+                    # if (tempoIdx+1) < len(tempoList) and tempoList[tempoIdx+1][0] <= currentTick:
+                    #     tempoIdx += 1
+                    #     tempo = tempoList[tempoIdx][1]
+
+                    # Learn the tempo - should only happen on channel 1
+                    if msg.type == "set_tempo":
+                        tempoList.append([currentTick, msg.tempo])
+
+                    # Learn the program
+                    if msg.type == "program_change":
+                        program = msg.program
+
+                    # Record when note starts
+                    elif msg.type == 'note_on':
+                        noteInfo = {
+                            'channel':   msg.channel,
+                            'note':      msg.note,
+                            'velocity':  msg.velocity,
+                            'start':     currentTime,
+                            'note_id':   self.unique_id,
+                            'program':   program,
+                            'track':     (msg.note % self.number_of_tracks_on_game_controller) + 1
+                        }
+                        self.unique_id += 1
+                        noteStart[str(msg.note)] = noteInfo
+                        notes.append(noteInfo)
+                        
+                    # Calc the note length and fill in the rest of the note info
+                    elif msg.type == 'note_off' and str(msg.note) in noteStart:
+                        noteInfo              = noteStart[str(msg.note)]
+                        noteLen               = currentTime - noteInfo['start']
+                        noteInfo['duration']  = int(1000 * noteLen)
+                        noteInfo['play_time'] = int(1000 * noteInfo['start']) + self.game_controller_play_offset_msec
+                        noteInfo['start']     = int(1000 * noteInfo['start'])
+                        del(noteStart[str(msg.note)])
+
+                for note in noteStart:
+                    noteInfo              = noteStart[note]
+                    noteLen               = currentTime - noteInfo['start']
+                    noteInfo['duration']  = int(1000 * noteLen)
+                    noteInfo['play_time'] = int(1000 * noteInfo['start']) + self.game_controller_play_offset_msec
+                    noteInfo['start']     = int(1000 * noteInfo['start'])
+                    
+                        
                 if notes:
-                    channelInfo = {}
-                    channelNum  = notes[0].channel
+                    channelInfo     = {}
+                    fullChannelInfo = {}
+                    channelNum      = notes[0]['channel']
                     
                     channelInfo['channel_id']      = channelNum
                     channelInfo['num_notes']       = len(notes)
                     channelInfo['instrument_name'] = channel.name.strip()
+
+                    fullChannelInfo          = copy.copy(channelInfo)
+                    fullChannelInfo['notes'] = notes
 
                     program_change = next((m for m in channel if m.type == 'program_change'), {'program': 0})
                     channelInfo['program'] = program_change.program
                     all_instruments.append(program_change.program)
 
                     info['song_channels'].append(channelInfo)
+                    fullNotesPerChannel.append(fullChannelInfo)
 
             info['song_id']     = song_id
 
             self.song_list.append(info)
+            self.song_list_full.append(fullNotesPerChannel)
             self.midis.append(midi)
 
             song_id += 1
-                    
-            print(info);
+
+        # Need this to cut and paste into the symphony (until we enable sync over messaging)
         all_instruments = sorted(set(all_instruments))
-        print("All Instruments")
+        print("All Instruments:")
         print(all_instruments)
                             
     def makeRegistrationMessage(self):
@@ -170,9 +245,10 @@ class Conductor:
         self.currentSongId = songId
 
         self.solace.subscribe("orchestra/theatre/" + str(theatreId))
-        self.songThread = threading.Thread(target=self.play_song, args=[songId])
-        self.songThread.start()
+        #self.songThread = threading.Thread(target=self.play_song, args=[songId])
+        #self.songThread.start()
         self.solace.sendResponse(rxMessage, {})
+        self.play_precanned_song(songId)
 
     def onStopSong(self, topic, rxMessage):
         for song in self.song_list:
@@ -214,6 +290,27 @@ class Conductor:
                 self.channel_instrument[channel_number] = program_change.program
 
 
+    def play_precanned_song(self, songId):
+
+        song = self.song_list_full[songId]
+
+        currentTime = self.solace.getTime()
+        for channel in song:
+            notes = []
+            for note in channel['notes']:
+                fixedNote = copy.copy(note)
+                if ('play_time' in fixedNote):
+                    fixedNote['play_time'] = fixedNote['play_time'] + currentTime + 5000
+                    notes.append(fixedNote)
+            
+            message_body = {
+                'msg_type': 'note_list',
+                'note_list': notes
+            }
+            topic = "orchestra/theatre/" + self.theatre + "/" + str(channel['notes'][0]['channel'])
+            self.solace.sendMessage(topic, message_body)
+        
+                
     def play_song(self, songId):
 
         for song in self.song_list:
@@ -221,16 +318,23 @@ class Conductor:
         self.song_list[songId]['is_playing'] = 1
 
         self.select_song(songId)
+
+        channelIdxs = []
+        for i in range(30):
+            channelIdxs.append(0)
+
+        song_full = self.song_list_full[songId]
+            
         for msg in self.selected_song_midi.play():
             if not self.song_list[songId]['is_playing']:
                 print("Stopping song")
                 return
             if msg.type == "note_on":
                 channel_number = msg.channel
+                full_note      = song_full[channel_number-1]['notes'][channelIdxs[channel_number]]
+                channelIdxs[channel_number] += 1
                 topic = "orchestra/theatre/" + self.theatre + "/" + str(channel_number)
                 unique_notes = self.channels[channel_number]['unique']
-                #print(str(msg.channel) + ": " + self.notes[msg.note % 12])
-
                 current_time = time.time()
 
                 # Message body
@@ -253,7 +357,7 @@ class Conductor:
                         'track': str((unique_notes.index(msg.note) % self.number_of_tracks_on_game_controller) + 1),
                         'note': str(msg.note),
                         'channel': str(channel_number),
-                        'duration': str(self.quarterNoteLength),
+                        'duration': str(full_note['duration']),
                         'current_time': str(current_time),
                         'play_time': str(current_time + self.game_controller_play_offset_sec)
                         }
