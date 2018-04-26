@@ -185,15 +185,15 @@ function addTimedSlider(message) {
       // Add the slider 1.5 seconds ahead of time
       var currentTime = messaging.getSyncedTime();
       var latencyToSymphony = 100;
-      var timeoutSeconds = noteMessage.play_time - currentTime - (sliderTimeSecs * 1000) - latencyToSymphony;
-      if (timeoutSeconds < 0) {
-        timeoutSeconds = 0;
+      var timeoutMilliSeconds = noteMessage.play_time - currentTime - (sliderTimeSecs * 1000) - latencyToSymphony;
+      if (timeoutMilliSeconds < 0) {
+        timeoutMilliSeconds = 0;
       }
 
-      console.log('Adding slider to play in ', timeoutSeconds, ' seconds');
+      console.log('Adding slider to play in ', timeoutMilliSeconds, ' milliSeconds');
       sliderTimeouts.push(setTimeout(function () {
         addSlider(noteMessage.id, noteMessage.track, noteMessage);
-      }, timeoutSeconds * 1000));
+      }, timeoutMilliSeconds));
     });
   }
 }
