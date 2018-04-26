@@ -13,12 +13,12 @@ const allSliders = [];
 
 const timeouts = [];
 
-function addTimedSlider(message) {
-    let timeoutSeconds = message.play_time - message.current_time - (sliderTimeSecs * 1000);
+function addTimedSlider(message, delay) {
+    let sliderDelay = delay - (sliderTimeSecs * 1000);
 
     timeouts.push(setTimeout(function () {
         addSlider(message.id, message.channel, message.track);
-    }, timeoutSeconds * 1000));
+    }, sliderDelay));
 }
 
 function buildTracks(channel_list) {
@@ -217,7 +217,7 @@ class Symphony {
                 let safeNote = Object.assign({}, note);
                 let delay = (safeNote.play_time - safeNote.current_time) + (sliderTimeSecs * 1000);
 
-                addTimedSlider(safeNote);
+                addTimedSlider(safeNote, delay);
 
                 timeouts.push(setTimeout(function () {
                     if (safeNote.program) {
@@ -240,7 +240,7 @@ class Symphony {
                 let safeNote = Object.assign({}, note);
                 let delay = (safeNote.play_time - self.messaging.getTime()) + (sliderTimeSecs * 1000);
 
-                //addTimedSlider(safeNote);
+                addTimedSlider(safeNote, delay);
 
                 timeouts.push(setTimeout(function () {
                     if (safeNote.program) {
