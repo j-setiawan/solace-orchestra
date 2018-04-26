@@ -13,12 +13,12 @@ const allSliders = [];
 
 const timeouts = [];
 
-function addTimedSlider(message) {
-    let timeoutSeconds = message.play_time - message.current_time - (sliderTimeSecs * 1000);
+function addTimedSlider(message, delay) {
+    let sliderDelay = delay - (sliderTimeSecs * 1000);
 
     timeouts.push(setTimeout(function () {
         addSlider(message.id, message.channel, message.track);
-    }, timeoutSeconds * 1000));
+    }, sliderDelay));
 }
 
 function buildTracks(channel_list) {
@@ -146,7 +146,8 @@ class Symphony {
         console.log("Connected to Solace Messaging");
 
         this.messaging.subscribe(
-            "orchestra/theatre/default/+"
+            "orchestra/theatre/default",
+            "orchestra/theatre/default/" + this.messaging.WILDCARD
         );
 
         this.rxRegister();
@@ -216,7 +217,7 @@ class Symphony {
                 let safeNote = Object.assign({}, note);
                 let delay = (safeNote.play_time - safeNote.current_time) + (sliderTimeSecs * 1000);
 
-                addTimedSlider(safeNote);
+                addTimedSlider(safeNote, delay);
 
                 timeouts.push(setTimeout(function () {
                     if (safeNote.program) {
@@ -232,23 +233,23 @@ class Symphony {
     }
 
     rxNoteList(topic, message) {
-        // console.log(message);
+        console.log(message);
         let self = this;
         for (let note of message.note_list) {
             (function(note) {
                 let safeNote = Object.assign({}, note);
                 let delay = (safeNote.play_time - self.messaging.getTime()) + (sliderTimeSecs * 1000);
 
-                //addTimedSlider(safeNote);
+                addTimedSlider(safeNote, delay);
 
-                setTimeout(function () {
+                timeouts.push(setTimeout(function () {
                     if (safeNote.program) {
                         MIDI.programChange(safeNote.channel, safeNote.program);
                     }
                     MIDI.setVolume(safeNote.channel, 127);
                     MIDI.noteOn(safeNote.channel, safeNote.note, hitNotes.hasOwnProperty(note.note_id) ? safeNote.velocity : safeNote.velocity/self.velocityDerateFactor, 0);
                     MIDI.noteOff(safeNote.channel, safeNote.note, safeNote.duration/1000);
-                }, delay);
+                }, delay));
             })(note);
         }
     }
