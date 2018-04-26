@@ -192,7 +192,7 @@ function addTimedSlider(message) {
 
       console.log('Adding slider to play in ', timeoutSeconds, ' seconds');
       sliderTimeouts.push(setTimeout(function () {
-        addSlider(noteMessage.id, noteMessage.track, noteMessage);
+        addSlider(noteMessage.note_id, noteMessage.track, noteMessage);
       }, timeoutSeconds));
     });
   }
@@ -211,7 +211,7 @@ function buildSlider(id, track, message) {
   slider.id = id;
   slider.message = message;
   slider.missedByMillis = -9999;
-  if (message !== undefined) {
+  if (typeof message !== 'undefined') {
     slider.pressed = false;
   } else {
     slider.pressed = true;
@@ -263,7 +263,7 @@ function buttonPress(track) {
 
   // Check if there are any sliders for this track
   var index = allSliders.map(function(s) {
-    if (s.pressed != null) {
+    if (!s.pressed) {
      return null; 
     } else
       return s.track;
