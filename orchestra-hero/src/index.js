@@ -200,6 +200,7 @@ function buildSlider(id, track, message) {
   slider.track = track;
   slider.id = id;
   slider.message = message;
+  slider.missedByMillis = -9999;
   if (message !== undefined) {
     slider.pressed = false;
   } else {
@@ -215,6 +216,10 @@ function buildSlider(id, track, message) {
 function addSlider(id, track, message) {
   var sliders = document.getElementById("sliders");
   var slider = buildSlider(id, parseInt(track), message);
+
+  // Set the time to remove the slider
+  slider.removeTime = Date.now() + sliderTimeSecs * 1000;
+
   sliders.appendChild(slider.element);
 
   allSliders.push(slider);
@@ -222,10 +227,14 @@ function addSlider(id, track, message) {
   // Remove the slider after it hits the end
   setTimeout(function() {
     slider.element.remove();
-    slider.removeTime = Date.now();
-    if (slider.pressed === false){
+    if (slider.pressed === false) {
       score -=10;
       updateScore();
+    } else {
+      if (slider.missedByMillis != -9999) {
+        score +=20;
+        updateScore();
+      }
     }
     slider = {};
   }, sliderTimeSecs * 1000);
@@ -252,8 +261,8 @@ function buttonPress(track) {
 
   var slider = allSliders[index];
 
-  //var currentTime = Date.now();
-  var currentTime = messaging.getSyncedTime();
+  var currentTime = Date.now();
+  //var currentTime = messaging.getSyncedTime();
 
   if (slider != null) {
     slider.pressed = true;
