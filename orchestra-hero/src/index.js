@@ -14,7 +14,7 @@ var messaging;
 var timeRef;
 var syncReady = false;
 var musicianName = '';
-
+var score = 0;
 // Amount of time it takes the slider to slide down the track
 var sliderTimeSecs = 1.5;
 var publisher = {};
@@ -174,7 +174,8 @@ function addTimedSlider(message) {
 
       // Add the slider 1.5 seconds ahead of time
       var currentTime = messaging.getSyncedTime();
-      var timeoutSeconds = noteMessage.play_time - currentTime - sliderTimeSecs;
+      var latencyToSymphony = 100;
+      var timeoutSeconds = noteMessage.play_time - currentTime - sliderTimeSecs - latencyToSymphony;
       if (timeoutSeconds < 0) {
         timeoutSeconds = 0;
       }
@@ -199,6 +200,11 @@ function buildSlider(id, track, message) {
   slider.track = track;
   slider.id = id;
   slider.message = message;
+  if (message !== undefined) {
+    slider.pressed = false;
+  } else {
+    slider.pressed = true;
+  }
   slider.element.className +=
     "slider slider-anim-" + track + " track" + track + " shape color" + track;
 
@@ -217,6 +223,10 @@ function addSlider(id, track, message) {
   setTimeout(function() {
     slider.element.remove();
     slider.removeTime = Date.now();
+    if (slider.pressed === false){
+      score -=10;
+      updateScore();
+    }
     slider = {};
   }, sliderTimeSecs * 1000);
 
@@ -294,6 +304,10 @@ function buttonPress(track) {
 
     publishSpontaneousNoteMessage(spontaneousNote);
   }
+}
+
+function updateScore() {
+   $("#score").html(score.toString());
 }
 
 function uuid() {
