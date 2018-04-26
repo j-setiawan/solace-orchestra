@@ -238,7 +238,7 @@ class Symphony {
         for (let note of message.note_list) {
             (function(note) {
                 let safeNote = Object.assign({}, note);
-                let delay = (safeNote.play_time - self.messaging.getTime()) + (sliderTimeSecs * 1000);
+                let delay = safeNote.play_time - self.messaging.getTime();
 
                 addTimedSlider(safeNote, delay);
 

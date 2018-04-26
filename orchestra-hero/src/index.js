@@ -193,7 +193,7 @@ function addTimedSlider(message) {
       console.log('Adding slider to play in ', timeoutSeconds, ' seconds');
       sliderTimeouts.push(setTimeout(function () {
         addSlider(noteMessage.id, noteMessage.track, noteMessage);
-      }, timeoutSeconds * 1000));
+      }, timeoutSeconds));
     });
   }
 }

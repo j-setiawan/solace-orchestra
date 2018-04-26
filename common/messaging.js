@@ -234,7 +234,7 @@ export default class Messaging {
       // start time sync first, passing the start-song trigger topic and message
       this.syncRetries = 5;   // sync time sample size
       this.lowestLat = 500; // lowest latency starting point
-      this.timeoffset = undefined;
+      this.timeoffset = 0;
       this._sendTimeRequest(topic, message);
     }
     else if (msgType.match(/_response/) &&
