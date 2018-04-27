@@ -111,6 +111,7 @@ class Conductor:
         for file in self.midi_files:
             midi = mido.MidiFile(self.midi_file_path + "/" + file)
             name = re.sub('\.mid$', '', file)
+            print("Parsing midi file: ", file)
             info = {
                 'song_name':     name,
                 'song_channels': [],
@@ -245,10 +246,10 @@ class Conductor:
         self.currentSongId = songId
 
         self.solace.subscribe("orchestra/theatre/" + str(theatreId))
-        #self.songThread = threading.Thread(target=self.play_song, args=[songId])
-        #self.songThread.start()
         self.solace.sendResponse(rxMessage, {})
-        self.play_precanned_song(songId)
+
+        self.songThread = threading.Thread(target=self.play_precanned_song, args=[songId])
+        self.songThread.start()
 
     def onStopSong(self, topic, rxMessage):
         for song in self.song_list:
@@ -292,6 +293,9 @@ class Conductor:
 
     def play_precanned_song(self, songId):
 
+        # Need to sleep a bit so that the other components can register their
+        # subscriptions
+        time.sleep(2)
         song = self.song_list_full[songId]
 
         currentTime = self.solace.getTime()
@@ -308,6 +312,7 @@ class Conductor:
                 'note_list': notes
             }
             topic = "orchestra/theatre/" + self.theatre + "/" + str(channel['notes'][0]['channel'])
+            # print("Sending note list on ", channel['notes'][0]['channel'], topic)
             self.solace.sendMessage(topic, message_body)
         
                 

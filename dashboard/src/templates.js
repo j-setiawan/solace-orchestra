@@ -20,7 +20,7 @@ let formatters = {
         value < 20 ? "rtt-fast" :
         value < 50 ? "rtt-medium" :
         "rtt-slow";
-    return [{cn: `rtt-${value < 30 ? "fast" : value < 100 ? "medium" : "slow"}`},
+    return [{cn: `rtt-${value < 75 ? "fast" : value < 150 ? "medium" : "slow"}`},
             `${value} ms`];
   }
 
