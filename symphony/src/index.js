@@ -7,11 +7,38 @@ const colours = ['#0074d9', '#d83439', '#38b439', '#e9cd54', '#811ed1', '#e66224
 
 let hitNotes = {};
 
+let playerNames = {};
 let trackPositions = {};
 const line_spacing = 20;
 const allSliders = [];
 
 const timeouts = [];
+
+function addPlayer(name, channel) {
+    let playerDiv = document.getElementById("players");
+    let channelIndex = 0;
+
+    if (playerNames.hasOwnProperty(channel)) {
+        channelIndex += Object.keys(playerNames[channel]).length;
+    } else {
+        playerNames[channel] = {};
+    }
+
+    let playerNameDiv = document.createElement("div");
+    playerNameDiv.id = "player_name_" + name;
+    playerNameDiv.className = "player-name";
+    playerNameDiv.innerText = name + ": 0";
+    playerNameDiv.style.position = "absolute";
+    playerNameDiv.style.left = "440px";
+    playerNameDiv.style.top = (270 - parseInt(trackPositions[channel][channelIndex].replace(/px/,"")))+"px";
+    playerDiv.appendChild(playerNameDiv);
+
+    playerNames[channel][name] =  playerNameDiv;
+}
+
+function updateScore(name, channel, score) {
+    playerNames[channel][name].innerText = name + ": " + score;
+}
 
 function addTimedSlider(message, delay) {
     let sliderDelay = delay - (sliderTimeSecs * 1000);
@@ -24,6 +51,7 @@ function addTimedSlider(message, delay) {
 function buildTracks(channel_list) {
     trackPositions = {};
 
+    let playerDiv = document.getElementById("players");
     let lines = document.getElementById("lines");
 
     while (lines.firstChild) {
@@ -109,6 +137,7 @@ class Symphony {
                     note_list: (...args) => this.rxNoteList(...args),
                     reregister: (...args) => this.rxRegister(...args),
                     register_response: (...args) => this.rxRegisterResponse(...args),
+                    player_start: (...args) => this.rxStartPlayer(...args),
                 }
             }
         );
@@ -176,9 +205,21 @@ class Symphony {
         this.messaging.sendResponse(message, {});
     }
 
+    rxStartPlayer(topic, message) {
+        addPlayer(message.name, message.channel_id)
+    }
+
+    rxScoreUpdate(topic, message) {
+        updateScore(message.name, message.channel_id, message.score);
+    }
+
     rxStopSong(topic, message) {
+        let playerDiv = document.getElementById("players");
+        while (playerDiv.firstChild) playerDiv.removeChild(playerDiv.firstChild);
+
         buildTracks([0]);
         hitNotes = {};
+        playerNames = {};
 
         while(timeouts.length > 0) {
             clearTimeout(timeouts.pop());
@@ -208,28 +249,6 @@ class Symphony {
 
     rxPlayNote(topic, message) {
         hitNotes[message.note] = 0;
-    }
-
-    rxNoteList2(topic, message) {
-        console.log(message);
-        for (let note of message.note_list) {
-            (function(note) {
-                let safeNote = Object.assign({}, note);
-                let delay = (safeNote.play_time - safeNote.current_time) + (sliderTimeSecs * 1000);
-
-                addTimedSlider(safeNote, delay);
-
-                timeouts.push(setTimeout(function () {
-                    if (safeNote.program) {
-                        MIDI.programChange(safeNote.channel, safeNote.program);
-                    }
-                    MIDI.setVolume(safeNote.channel, 127);
-                    MIDI.noteOn(safeNote.channel, safeNote.note, hitNotes.hasOwnProperty(note.note_id) ? 127 : 30, 0);
-                    MIDI.noteOff(safeNote.channel, safeNote.note, safeNote.duration/1000);
-
-                }, delay));
-            })(note);
-        }
     }
 
     rxNoteList(topic, message) {

@@ -8,6 +8,7 @@ import $ from 'jquery';
 
 var myId = 'orchestra-hero-' + uuid();
 
+var scoreUpdater;
 var theatreId = "default";
 var channelId = "0";
 var messaging;
@@ -100,12 +101,31 @@ function startSong(topic, message) {
   messaging.subscribe(
     subscriberTopic
   );
+
+  messaging.sendMessage(`orchestra/theatre/${theatreId}`, {
+    'msg_type': 'player_start',
+    'channel_id': channelId,
+    'name': musicianName
+  })
+
+  scoreUpdater = setInterval(function () {
+    messaging.sendMessage(`orchestra/theatre/${theatreId}`, {
+      'msg_type': 'score_update',
+      'channel_id': channelId,
+      'name': musicianName,
+      'score': score,
+    })
+  }, 1000);
+
   messaging.sendResponse(message, {}); 
 }
 
 function stopSong(topic, message) {
   console.log("Stop song ", topic, message);
   channelId = message.channel_id;
+
+  clearInterval(scoreUpdater);
+
   var subscriberTopic = `orchestra/theatre/${theatreId}/${channelId}`;
   messaging.unsubscribe(
     subscriberTopic
