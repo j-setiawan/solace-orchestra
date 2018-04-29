@@ -2,17 +2,22 @@ import './index.scss';
 import Messaging      from "../../common/messaging";
 
 
-const sliderTimeSecs = 1.5;
+const sliderTimeMs = 1500;
 const colours = ['#0074d9', '#d83439', '#38b439', '#e9cd54', '#811ed1', '#e66224', '#e041ab'];
 
-let hitNotes = {};
+// Extracted from all current songs
+// TODO: need to learn this from all conductors at start time rather than
+// hardcoded
+const instruments = [0, 4, 16, 22, 24, 25, 26, 27, 28, 29, 30, 33,
+    35, 47, 48, 52, 56, 60, 68, 70, 71, 73, 74, 95, 120];
 
-let playerNames = {};
-let trackPositions = {};
 const line_spacing = 20;
 const allSliders = [];
-
 const timeouts = [];
+
+let hitNotes = {};
+let playerNames = {};
+let trackPositions = {};
 
 function addPlayer(name, channel) {
     let playerDiv = document.getElementById("players");
@@ -41,7 +46,7 @@ function updateScore(name, channel, score) {
 }
 
 function addTimedSlider(message, delay) {
-    let sliderDelay = delay - (sliderTimeSecs * 1000);
+    let sliderDelay = delay - sliderTimeMs;
 
     timeouts.push(setTimeout(function () {
         addSlider(message.id, message.channel, message.track);
@@ -109,7 +114,7 @@ function addSlider(id, channel, track) {
         slider.element.remove();
         slider.removeTime = Date.now();
         slider = {};
-    }, sliderTimeSecs * 1000));
+    }, sliderTimeMs));
 
     // Remove the event
     timeouts.push(setTimeout(function () {
@@ -117,13 +122,12 @@ function addSlider(id, channel, track) {
             return s.id;
         }).indexOf(id);
         allSliders.splice(index, 1);
-    }, sliderTimeSecs * 1000 + 200));
+    }, sliderTimeMs + 200));
 }
 
 class Symphony {
     constructor() {
         this.id = uuid();
-        this.noteHits = {};
         this.messaging = new Messaging(
             {
                 callbacks: {
@@ -142,33 +146,25 @@ class Symphony {
             }
         );
 
-        // Extracted from all current songs
-        // TODO: need to learn this from all conductors at start time rather than
-        // hardcoded
-        const instruments = [0, 4, 16, 22, 24, 25, 26, 27, 28, 29, 30, 33,
-                             35, 47, 48, 52, 56, 60, 68, 70, 71, 73, 74, 95, 120];
-
         // How much we penalize notes that weren't hit
         this.velocityDerateFactor = 1;
 
         console.log("Loading " + instruments.length + " instruments...");
         let lastProgress = 0;
         MIDI.loadPlugin({
-	    soundfontUrl: "midi/soundfont/MusyngKite/",
-	    instruments: instruments,
-	    onprogress: function(state, progress) {
+            soundfontUrl: "midi/soundfont/MusyngKite/",
+            instruments: instruments,
+            onprogress: function(state, progress) {
                 let percent = (progress*100.0).toFixed(0);
                 if (percent - lastProgress > 9) {
                     console.log("Instrument loading progress: " + percent + "%");
                     lastProgress = percent;
                 }
-	    },
-	    onsuccess: function() {
+            },
+            onsuccess: function() {
                 console.log("Instruments Loaded!");
-	    }
+            }
         });
-                    
-
     }
 
     connected() {
@@ -272,8 +268,6 @@ class Symphony {
             })(note);
         }
     }
-
-
 }
 
 function uuid() {
