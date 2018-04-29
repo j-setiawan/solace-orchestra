@@ -8,6 +8,7 @@ import $ from 'jquery';
 
 var myId = 'orchestra-hero-' + uuid();
 
+var scoreUpdater;
 var theatreId = "default";
 var channelId = "0";
 var messaging;
@@ -100,12 +101,31 @@ function startSong(topic, message) {
   messaging.subscribe(
     subscriberTopic
   );
+
+  messaging.sendMessage(`orchestra/theatre/${theatreId}`, {
+    'msg_type': 'player_start',
+    'channel_id': channelId,
+    'name': musicianName
+  })
+
+  scoreUpdater = setInterval(function () {
+    messaging.sendMessage(`orchestra/theatre/${theatreId}`, {
+      'msg_type': 'score_update',
+      'channel_id': channelId,
+      'name': musicianName,
+      'score': score,
+    })
+  }, 1000);
+
   messaging.sendResponse(message, {}); 
 }
 
 function stopSong(topic, message) {
   console.log("Stop song ", topic, message);
-  channelId = message.channel_id;
+
+  score = 0;
+  clearInterval(scoreUpdater);
+
   var subscriberTopic = `orchestra/theatre/${theatreId}/${channelId}`;
   messaging.unsubscribe(
     subscriberTopic
@@ -115,6 +135,10 @@ function stopSong(topic, message) {
   // Cleanup existing notes
   sliderTimeouts.forEach(timeout => clearTimeout(timeout));
   sliderTimeouts = [];
+
+  // Remove all sliders
+  let sliderDiv = document.getElementById("sliders");
+  while (sliderDiv.firstChild) sliderDiv.removeChild(sliderDiv.firstChild);
 }
 
 function enableButtons() {
@@ -131,6 +155,7 @@ function connected() {
   console.log("Connected.");
   // Subscribe to theatreId and channelId
   messaging.subscribe(
+    "orchestra/theatre/default",
     "orchestra/broadcast",
     "orchestra/p2p/" + myId
   );
@@ -192,7 +217,7 @@ function addTimedSlider(message) {
 
       console.log('Adding slider to play in ', timeoutSeconds, ' seconds');
       sliderTimeouts.push(setTimeout(function () {
-        addSlider(noteMessage.id, noteMessage.track, noteMessage);
+        addSlider(noteMessage.note_id, noteMessage.track, noteMessage);
       }, timeoutSeconds));
     });
   }
@@ -211,7 +236,7 @@ function buildSlider(id, track, message) {
   slider.id = id;
   slider.message = message;
   slider.missedByMillis = -9999;
-  if (message !== undefined) {
+  if (typeof message !== 'undefined') {
     slider.pressed = false;
   } else {
     slider.pressed = true;
@@ -261,15 +286,7 @@ function addSlider(id, track, message) {
 function buttonPress(track) {
   console.log("Button press on track", track);
 
-  // Check if there are any sliders for this track
-  var index = allSliders.map(function(s) {
-    if (s.pressed != null) {
-     return null; 
-    } else
-      return s.track;
-    }).indexOf(track);
-
-  var slider = allSliders[index];
+  var slider = allSliders.find(s => !s.pressed && s.track === track);
 
   var currentTime = Date.now();
   //var currentTime = messaging.getSyncedTime();

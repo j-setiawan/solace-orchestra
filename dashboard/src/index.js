@@ -89,10 +89,10 @@ class Dashboard {
 
       let newSongs = [];
 
-      if (this.conductorMap[message.name]) {
+      if (this.conductorMap[message.client_id]) {
 
         // Already have a conductor with this name
-        let conductor = this.conductorMap[message.name];
+        let conductor = this.conductorMap[message.client_id];
         
         if (conductor.client_id !== message.client_id) {
           console.warn("Duplicate conductor of name ", message.name);
@@ -100,7 +100,7 @@ class Dashboard {
         
         // Remove all old songs for this conductor
         for (let song of this.songs) {
-          if (song.conductor_name != message.name) {
+          if (song.conductor_id != message.client_id) {
             newSongs.push(song);
           }
         }
@@ -114,8 +114,9 @@ class Dashboard {
         let newSong = Object.assign(
           {
             conductor_name: message.name,
+            conductor_id:   message.client_id,
             numChannels:    song.song_channels.length,
-            channelList: song.song_channels
+            channelList:    song.song_channels
           },
           song);
         
@@ -133,13 +134,14 @@ class Dashboard {
 
       this.songs = newSongs;
 
-      this.conductorMap[message.name] = {
-        name:     message.name,
-        numSongs: message.song_list.length
+      this.conductorMap[message.client_id] = {
+        name:      message.name,
+        client_id: message.client_id,
+        numSongs:  message.song_list.length
       };
       this.conductors = Object.values(this.conductorMap);
 
-      componentAdded = this.conductorMap[message.name];
+      componentAdded = this.conductorMap[message.client_id];
         
       //console.log("Registered:", this.songs, message);
       jst.update("conductor");
@@ -148,15 +150,16 @@ class Dashboard {
     }
     else if (message.component_type === "musician") {
 
-      this.musicianMap[message.name] = {
-        name:    message.name,
-        hits:    message.hits    || 0,
-        misses:  message.misses  || 0,
-        percent: message.percent || 0,
-        latency: message.latency || 0
+      this.musicianMap[message.client_id] = {
+        name:         message.name,
+        client_id:    message.client_id,
+        hits:         message.hits    || 0,
+        misses:       message.misses  || 0,
+        percent:      message.percent || 0,
+        latency:      message.latency || 0
       };
 
-      componentAdded = this.musicianMap[message.name];
+      componentAdded = this.musicianMap[message.client_id];
 
       this.musicians = Object.values(this.musicianMap);
       jst.update("musician");
@@ -164,12 +167,13 @@ class Dashboard {
     }
     else if (message.component_type === "symphony") {
 
-      this.symphonyMap[message.name] = {
-        name: message.name,
-        latency: 0
+      this.symphonyMap[message.client_id] = {
+        name:      message.name,
+        client_id: message.client_id,
+        latency:   0
       };
 
-      componentAdded = this.symphonyMap[message.name];
+      componentAdded = this.symphonyMap[message.client_id];
 
       this.symphonies = Object.values(this.symphonyMap);
       jst.update("symphony");
@@ -211,10 +215,10 @@ class Dashboard {
 
   removeComponent(component) {
     if (component.component_type === "conductor") {
-      delete this.conductorMap[component.name];
+      delete this.conductorMap[component.client_id];
       let index = 0;
       this.conductors.map((entry, i) => {
-        if (entry.name === component.name) {
+        if (entry.client_id === component.client_id) {
           index = i;
           return;
         }
@@ -223,7 +227,7 @@ class Dashboard {
 
       let newSongs = [];
       this.songs.map((song) => {
-        if (song.conductor_name != component.name) {
+        if (song.conductor_id != component.client_id) {
           newSongs.push(song);
         }
         else {
@@ -236,10 +240,10 @@ class Dashboard {
       jst.update("song");
     }
     else if (component.component_type === "musician") {
-      delete this.musicianMap[component.name];
+      delete this.musicianMap[component.client_id];
       let index = 0;
       this.musicians.map((entry, i) => {
-        if (entry.name === component.name) {
+        if (entry.client_id === component.client_id) {
           index = i;
           return;
         }
@@ -247,10 +251,10 @@ class Dashboard {
       this.musicians.splice(index, 1);
     }
     else if (component.component_type === "symphony") {
-      delete this.symphonyMap[component.name];
+      delete this.symphonyMap[component.client_id];
       let index = 0;
       this.symphonies.map((entry, i) => {
-        if (entry.name === component.name) {
+        if (entry.client_id === component.client_id) {
           index = i;
           return;
         }
@@ -439,7 +443,7 @@ class Dashboard {
     };
 
     // Send to the specific conductor
-    let conductor   = this.conductorMap[song.conductor_name];
+    let conductor   = this.conductorMap[song.conductor_id];
     conductor.state = "waiting";
 
     msg.time_server_topic = `orchestra/p2p/${conductor.client_id}`;

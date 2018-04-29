@@ -360,11 +360,11 @@ class JstElement {
           }
         }
         else if (newJst.events[eventName].listener !== this.events[eventName].listener) {
-          this.events[eventName] = newJst.events[eventName];
           if (this.isDomified) {
             this.el.removeEventListener(eventName, this.events[eventName].listener);
             this.el.addEventListener(eventName, newJst.events[eventName].listener);
           }
+          this.events[eventName] = newJst.events[eventName];
         }
       }
       for (let eventName of Object.keys(newJst.events)) {

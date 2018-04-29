@@ -28,8 +28,6 @@ class SolaceMQTTClient:
         self.client = mqtt.Client()
 
         def onConnect(client, userdata, flags, rc):
-            print(flags)
-            print(rc)
             self.onConnect(client, userdata, flags, rc)
         
         def onDisconnect(client, userdata, rc):
@@ -41,7 +39,6 @@ class SolaceMQTTClient:
         def onLog(client, userdata, level, buf):
             print(buf)
 
-        print(props)
         self.client.on_connect = onConnect
         self.client.on_disconnect = onDisconnect
         self.client.on_message = onMessage
