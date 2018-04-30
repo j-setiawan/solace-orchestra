@@ -92,6 +92,11 @@ function mainLoop() {
     $('#buttons').hide();
   }, 3200);
   $('#submitName').click(() => getName());
+  $('#musician-name').on("keypress", (e) => {
+    if (e.keyCode == 13) {
+      getName();
+    }
+  });
 }
 
 function getName() {
