@@ -42,7 +42,10 @@ function addPlayer(name, channel) {
 }
 
 function updateScore(name, channel, score) {
-    playerNames[channel][name].innerText = name + ": " + score;
+    if (!playerNames[channel] || !playerNames[channel][name] || !score) {
+        return;
+    }
+    playerNames[channel][name].innerText = name + ": " + score.percent + "%";
 }
 
 function addTimedSlider(message, delay) {
@@ -147,7 +150,7 @@ class Symphony {
         );
 
         // How much we penalize notes that weren't hit
-        this.velocityDerateFactor = 1;
+        this.velocityDerateFactor = 8;
 
         console.log("Loading " + instruments.length + " instruments...");
         let lastProgress = 0;
@@ -172,7 +175,9 @@ class Symphony {
 
         this.messaging.subscribe(
             "orchestra/theatre/default",
-            "orchestra/theatre/default/" + this.messaging.WILDCARD
+            "orchestra/theatre/default/" + this.messaging.WILDCARD,
+            "orchestra/theatre/default/" + this.messaging.WILDCARD + "/play_note",
+            "orchestra/theatre/default/score_update"
         );
 
         this.rxRegister();
@@ -206,7 +211,7 @@ class Symphony {
     }
 
     rxScoreUpdate(topic, message) {
-        updateScore(message.name, message.channel_id, message.score);
+        updateScore(message.name, message.channel_id, message);
     }
 
     rxStopSong(topic, message) {
@@ -248,7 +253,7 @@ class Symphony {
     }
 
     rxNoteList(topic, message) {
-        console.log(message);
+        // console.log(message);
         let self = this;
         for (let note of message.note_list) {
             (function(note) {

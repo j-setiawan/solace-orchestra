@@ -117,6 +117,7 @@ export default templates = {
                                    templates.table({
                                      fields: [
                                        {title: "Name", name: "name"},
+                                       {title: "Channel", name: "channel_id"},
                                        {title: "Hits", name: "hits"},
                                        {title: "Misses", name: "misses"},
                                        {title: "%", name: "percent"},

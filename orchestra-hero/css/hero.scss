@@ -380,9 +380,22 @@ div#buttons {
   z-index: 9999;
 }
 
-#score {
+#score1 {
   position: absolute;
   left: 380px;
   top: 30px;
   color: #CCCCCC;
+}
+
+#score {
+    position: absolute;
+    color: white;
+    left: 333px;
+    top: 11px;
+    padding: 0px;
+    font-size: 60%;
+}
+
+#score td {
+    padding-left: 8px;
 }

@@ -312,6 +312,13 @@ class Dashboard {
   
   rxScoreUpdate(topic, message) {
     console.log("Received scoreUpdate message: ", message);
+    let musician = this.musicianMap[message.client_id];
+    if (musician) {
+      musician.hits    = message.hits;
+      musician.misses  = message.misses;
+      musician.percent = message.percent;
+      jst.update("musician");
+    }
   }
 
   //
@@ -396,10 +403,12 @@ class Dashboard {
   stopCurrentSong() {
     this.sendStopSongMessage();
     this.unselectPlayingSong();
+    this.messaging.unsubscribe(`orchestra/theatre/default/score_update`);
   }
 
   startSong(song) {
     this.selectPlayingSong(song);
+    this.messaging.subscribe(`orchestra/theatre/default/score_update`);
     this.sendStartSongMessage(song);
   }
 
@@ -466,9 +475,12 @@ class Dashboard {
     let index = 0;
     for (let component of this.musicians) {
       component.state = "waiting";
-      msg.channel_id = song.channelList[index++].channel_id;
+      let txMsg = Object.assign({}, msg);
+      txMsg.channel_id = song.channelList[index++].channel_id;
+      component.channel_id = txMsg.channel_id;
+      console.log("SENDING START SONG:", txMsg, component);
       this.messaging.sendMessage(`orchestra/p2p/${component.client_id}`,
-                                 msg,
+                                 txMsg,
                                  (txMessage, rxMessage) => {
                                    this.handleStartSongResponse(component, component, rxMessage);
                                  }, 2000, 4);
@@ -476,6 +488,7 @@ class Dashboard {
         index = 0;
       }
     }
+    jst.update("musician");
     
   }
 

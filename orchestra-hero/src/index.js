@@ -1,5 +1,6 @@
 import env       from '../../common/env';
 import Messaging from '../../common/messaging';
+import jst       from '../../common/jayesstee';
 import '../assets/solaceSymphonyInverted.png';
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -15,12 +16,18 @@ var messaging;
 var timeRef;
 var syncReady = false;
 var musicianName = '';
-var score = 0;
+var currentChannelId = -1;
+
+var hitThreshold = 200;
+var score;
+
 // Amount of time it takes the slider to slide down the track
 var sliderTimeSecs = 1.5;
 var publisher = {};
 
 var sliderTimeouts = [];
+
+jst.makeGlobal();
 
 // Midi note to play when the button is pressed for a track
 // Track is the offset, note is the value;
@@ -50,11 +57,14 @@ function addDemoSliders() {
 }
 
 function setup() {
+  resetScore();
   mainLoop();
 }
 
 function mainLoop() {
-  
+
+  $('body').bind('touchmove', function(event) { event.preventDefault() }); // turns off double-hit zoom
+ 
   messaging = new Messaging(
     {
       callbacks: {
@@ -96,8 +106,9 @@ function getName() {
 
 function startSong(topic, message) {
   console.log("Start song ", topic, message);
-  channelId = message.channel_id;
-  var subscriberTopic = `orchestra/theatre/${theatreId}/${channelId}`;
+  resetScore();
+  currentChannelId = message.channel_id;
+  var subscriberTopic = `orchestra/theatre/${theatreId}/${currentChannelId}`;
   messaging.subscribe(
     subscriberTopic
   );
@@ -106,15 +117,23 @@ function startSong(topic, message) {
     'msg_type': 'player_start',
     'channel_id': channelId,
     'name': musicianName
-  })
+  });
 
+  if (scoreUpdater) {
+    clearInterval(scoreUpdater);
+  }
+  
   scoreUpdater = setInterval(function () {
-    messaging.sendMessage(`orchestra/theatre/${theatreId}`, {
-      'msg_type': 'score_update',
+    let total = score.hits + score.misses;
+    let percent = total ? (100.0*score.hits/total).toFixed(0) : "";
+    messaging.sendMessage(`orchestra/theatre/${theatreId}/score_update`, {
+      'msg_type':   'score_update',
       'channel_id': channelId,
-      'name': musicianName,
-      'score': score,
-    })
+      'name':       musicianName,
+      'hits':       score.hits,
+      'misses':     score.misses,
+      'percent':    percent
+    });
   }, 1000);
 
   messaging.sendResponse(message, {}); 
@@ -123,8 +142,8 @@ function startSong(topic, message) {
 function stopSong(topic, message) {
   console.log("Stop song ", topic, message);
 
-  score = 0;
   clearInterval(scoreUpdater);
+  scoreUpdater = undefined;
 
   var subscriberTopic = `orchestra/theatre/${theatreId}/${channelId}`;
   messaging.unsubscribe(
@@ -142,13 +161,17 @@ function stopSong(topic, message) {
 }
 
 function enableButtons() {
-  document.getElementById("button1").addEventListener("click", () => buttonPress(1));
-  document.getElementById("button2").addEventListener("click", () => buttonPress(2));
-  document.getElementById("button3").addEventListener("click", () => buttonPress(3));
-  document.getElementById("button4").addEventListener("click", () => buttonPress(4));
-  document.getElementById("button5").addEventListener("click", () => buttonPress(5));
-  document.getElementById("button6").addEventListener("click", () => buttonPress(6));
-  document.getElementById("button7").addEventListener("click", () => buttonPress(7));
+  let eventName = "mousedown";
+  if ('ontouchstart' in window || navigator.msMaxTouchPoints) {
+    eventName = "touchstart";
+  }
+  document.getElementById("button1").addEventListener(eventName, () => buttonPress(1));
+  document.getElementById("button2").addEventListener(eventName, () => buttonPress(2));
+  document.getElementById("button3").addEventListener(eventName, () => buttonPress(3));
+  document.getElementById("button4").addEventListener(eventName, () => buttonPress(4));
+  document.getElementById("button5").addEventListener(eventName, () => buttonPress(5));
+  document.getElementById("button6").addEventListener(eventName, () => buttonPress(6));
+  document.getElementById("button7").addEventListener(eventName, () => buttonPress(7));
 }
 
 function connected() {
@@ -262,23 +285,26 @@ function addSlider(id, track, message) {
   // Remove the slider after it hits the end
   setTimeout(function() {
     slider.element.remove();
-    if (slider.pressed === false) {
-      score -=10;
-      updateScore();
-    } else {
-      if (slider.missedByMillis != -9999) {
-        score +=20;
-        updateScore();
-      }
-    }
-    slider = {};
+    // slider = {};
   }, sliderTimeSecs * 1000);
 
   // Remove the event
   setTimeout(function() {
     var index = allSliders.map(function(s) { return s.id; }).indexOf(id);
+    var slider = allSliders[index];
     console.log("Removing slider at index", index);
-    allSliders.splice(index, 1);    
+    if (!slider.pressed ||
+        'offset' in slider && Math.abs(slider.offset) > hitThreshold) {
+      score.misses++;
+      score.inARow = 0;
+    }
+    else {
+      score.hits++;
+      score.inARow++;
+    }
+    score.total++;
+    updateScore();
+    allSliders.splice(index, 1);
   }, sliderTimeSecs * 1000 + 200);
 }
 
@@ -342,8 +368,42 @@ function buttonPress(track) {
   }
 }
 
+function resetScore() {
+  score = {
+    hits:    0,
+    misses:  0,
+    total:   0,
+    inARow:  0
+  };
+  updateScore();
+}
+
 function updateScore() {
-   $("#score").html(score.toString());
+  let scoreDisplay = "";
+
+  let table = $table(
+    $tr(
+      $th("Hits"),
+      $td(score.hits)
+    ),
+    $tr(
+      $th("Misses"),
+      $td(score.misses)
+    )
+  );
+  
+  let total = score.hits+score.misses;
+
+  if (total) {
+    table.appendChild(
+      $th("Percent"),
+      $td((100.0*score.hits/(total)).toFixed(0) + "%")
+    );
+  }
+
+  console.log(table);
+  jst("#score").replaceChild(table);
+  //$("#score").html(scoreDisplay);
 }
 
 function uuid() {
