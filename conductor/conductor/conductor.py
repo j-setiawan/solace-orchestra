@@ -314,6 +314,18 @@ class Conductor:
             topic = "orchestra/theatre/" + self.theatre + "/" + str(channel['notes'][0]['channel'])
             # print("Sending note list on ", channel['notes'][0]['channel'], topic)
             self.solace.sendMessage(topic, message_body)
+
+        print(self.song_list[songId])
+        time.sleep(self.song_list[songId]['song_length'] + 8);
+
+        topic = "orchestra/theatre/" + self.theatre
+        self.solace.sendMessage(topic, {'msg_type': 'complete_song',
+                                        'song_id':  self.currentSongId})
+        self.solace.sendMessage(topic, {'msg_type': 'stop_song',
+                                        'song_id':  self.currentSongId})
+        self.song_list[songId]['is_playing'] = 0
+        del self.currentSongId
+        
         
                 
     def play_song(self, songId):

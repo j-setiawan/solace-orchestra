@@ -58,7 +58,7 @@ export default class Messaging {
   }
 
   // Remove a list of subscriptions for this client
-  unsubscribe(...topic) {
+  unsubscribe(...topics) {
     for (let topic of topics) {
       this.client.unsubscribe( solace.SolclientFactory.createTopicDestination(topic),
         //true, // request confirmation
