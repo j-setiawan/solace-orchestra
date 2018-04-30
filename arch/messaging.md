@@ -17,7 +17,7 @@ The following list defines the items that are present in topics and messages:
 
 ## Topic Format
 
-General topic format is orchestra/\<destination-type>/\<optional-id1>/\<optional-id2>
+General topic format is orchestra/\<destination-type>/\<optional-id1>/\<optional-id2>\/\<optional-message-type>
 
 * **orchestra** - constant
 * **destination_type** - the type of destination. It is one of:
@@ -28,6 +28,7 @@ General topic format is orchestra/\<destination-type>/\<optional-id1>/\<optional
   * **channel** - sent to a specific channel in a song. The id following this has the theatre id followed by the channel id. e.g. for a theatre of 345 and a channel of 14, orchestra/channel/345/14
 * **optional-ids** - identifiers specific to the destination type
 
+Theatre messages will often contain a message type level following the theatre/\<theatre-id>/\<channel-id>. For example a score_update message on channel 3 in theatre 2 would have the topic: orchestra/theatre/2/3/score_update.
 
 ## Message Types
 
@@ -212,7 +213,7 @@ single message.
 This message is sent by the musician for each note played in the application. It is a fire-and-forget message
 destined for the symphony component so that it can be played.
 
-This message is sent to the topic: orchestra/theatre/\<theatre_id>/note
+This message is sent to the topic: orchestra/theatre/\<theatre_id>/\<channel_id>/play_note
 
 The format of the message is:
 
@@ -225,4 +226,13 @@ information about the note can be retrieved from the music score message data se
 ### Score Update Message
 
 This message is periodically sent by the musicians to update the dashboard and symphony on their scores. 
+
+This message is sent to the topic: orchestra/theatre/\<theatre-id>/score_update.
+
+The format of the message is:
+
+* **hits** - number of hits
+* **misses** - number of misses
+* **percent** - percentage of hits 
+* **num_in_a_row** - number of hits in a row at this point
 
