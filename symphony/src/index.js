@@ -214,6 +214,10 @@ class Symphony {
         updateScore(message.name, message.channel_id, message);
     }
 
+    rxCompleteSong(topic, message) {
+        this.rxStopSong(topic, message);
+    }
+  
     rxStopSong(topic, message) {
         let playerDiv = document.getElementById("players");
         while (playerDiv.firstChild) playerDiv.removeChild(playerDiv.firstChild);
