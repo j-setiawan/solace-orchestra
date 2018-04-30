@@ -45,6 +45,16 @@ For the conductor, the easiest way to run it is to do:
   pip install -r ../requirements.txt
 ```
 
+Next you need a credentials file in your home directory called `solace.cloud`. Its contents are:
+
+```
+  url=<solace-cloud-service-url>
+  port=<mqtt-port>
+  username=<username>
+  password=<password>
+```
+
+
 After than, run the conductor with:
 
 ```
