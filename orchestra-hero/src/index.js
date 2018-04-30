@@ -18,7 +18,8 @@ var syncReady = false;
 var musicianName = '';
 var currentChannelId = -1;
 
-var hitThreshold = 200;
+var hitThreshold           = 200;
+var notesTooCloseThreshold = 100;
 var score;
 
 // Amount of time it takes the slider to slide down the track
@@ -134,7 +135,7 @@ function startSong(topic, message) {
       'misses':     score.misses,
       'percent':    percent
     });
-  }, 1000);
+  }, 2500);
 
   messaging.sendResponse(message, {}); 
 }
@@ -202,7 +203,7 @@ function reregister(message) {
 }
 
 function publishPlayNoteMessage(messageJSon) {
-  var publisherTopic = `orchestra/theatre/${theatreId}/${channelId}`;
+  var publisherTopic = `orchestra/theatre/${theatreId}/${channelId}/play_note`;
   messageJSon.msg_type = "play_note";
   messaging.sendMessage(publisherTopic, messageJSon);
 }
@@ -228,6 +229,9 @@ function registerMusician(musicianName) {
 function addTimedSlider(message) {
   console.log('got message ', message);
   if (message.hasOwnProperty('note_list')) {
+    let lastTime = -9999;
+    let lastRiders;
+    let lastNoteId;
     message.note_list.forEach(function (noteMessage) {
 
       // Add the slider 1.5 seconds ahead of time
@@ -238,10 +242,27 @@ function addTimedSlider(message) {
         timeoutSeconds = 0;
       }
 
-      console.log('Adding slider to play in ', timeoutSeconds, ' seconds');
-      sliderTimeouts.push(setTimeout(function () {
-        addSlider(noteMessage.note_id, noteMessage.track, noteMessage);
-      }, timeoutSeconds));
+      console.log("Too close?", (timeoutSeconds - lastTime), notesTooCloseThreshold);
+      if ((timeoutSeconds - lastTime) < notesTooCloseThreshold && lastRiders) {
+        // Notes too close together in time - just add this note
+        // as a rider on the last one
+        lastRiders.push({
+          message:   noteMessage
+        });
+        console.log("Adding riders to", lastRiders, lastNoteId);
+      }
+      else {
+        lastRiders = new Array();
+        lastTime   = timeoutSeconds;
+        lastNoteId = noteMessage.note_id;
+        console.log('Adding slider to play in ', timeoutSeconds, ' seconds');
+        (function(riders) {
+          sliderTimeouts.push(setTimeout(function () {
+            addSlider(noteMessage.note_id, noteMessage.track,
+                      noteMessage, riders);
+          }, timeoutSeconds));
+        })(lastRiders);
+      }
     });
   }
 }
@@ -255,10 +276,10 @@ function addDemoSlider(id, track, timeout) {
 function buildSlider(id, track, message) {
   var slider = {};
   slider.element = document.createElement("div");
-  slider.track = track;
-  slider.id = id;
+  slider.track   = track;
+  slider.id      = id;
   slider.message = message;
-  slider.missedByMillis = -9999;
+  
   if (typeof message !== 'undefined') {
     slider.pressed = false;
   } else {
@@ -271,12 +292,14 @@ function buildSlider(id, track, message) {
   return slider;
 }
 
-function addSlider(id, track, message) {
+function addSlider(id, track, message, riders) {
   var sliders = document.getElementById("sliders");
   var slider = buildSlider(id, parseInt(track), message);
 
+  console.log("Adding slider with riders:", riders);
   // Set the time to remove the slider
   slider.removeTime = Date.now() + sliderTimeSecs * 1000;
+  slider.riders     = riders;
 
   sliders.appendChild(slider.element);
 
@@ -306,6 +329,9 @@ function addSlider(id, track, message) {
     updateScore();
     allSliders.splice(index, 1);
   }, sliderTimeSecs * 1000 + 200);
+
+  return slider;
+  
 }
 
 // Handle button presses on all tracks
@@ -339,6 +365,18 @@ function buttonPress(track) {
         time_offset: timeOffset
       };
       publishPlayNoteMessage(noteMsg);
+      console.log("Playing", noteMsg.note, slider.riders);
+      if (slider.riders.length) {
+        for (let rider of slider.riders) {
+          console.log("Playing rider:", rider.message);
+          let riderMsg = {
+            msg_type: 'play_note',
+            note:     rider.message.note_id,
+            time_offset: timeOffset
+          };
+          publishPlayNoteMessage(riderMsg);
+        }
+      }
     }
 
   } else {
