@@ -6,5 +6,10 @@ export default {
     smfvpn: "msgvpn-dnkn9y6yt",
     username: "demo-user",
     password: "mydemopassword"
+    //url: "mqtts://192.168.169.90:1883",
+    //smfurl: "ws://192.168.169.90:80",
+    //smfvpn: "default",
+    //username: "default",
+    //password: "mydemopassword"
   }
 };

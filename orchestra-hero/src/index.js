@@ -232,7 +232,6 @@ function registerMusician(musicianName) {
 }
 
 function addTimedSlider(message) {
-  console.log('got message ', message);
   if (message.hasOwnProperty('note_list')) {
     let lastTime = -9999;
     let lastRiders;
@@ -247,20 +246,18 @@ function addTimedSlider(message) {
         timeoutSeconds = 0;
       }
 
-      console.log("Too close?", (timeoutSeconds - lastTime), notesTooCloseThreshold);
       if ((timeoutSeconds - lastTime) < notesTooCloseThreshold && lastRiders) {
         // Notes too close together in time - just add this note
         // as a rider on the last one
         lastRiders.push({
           message:   noteMessage
         });
-        console.log("Adding riders to", lastRiders, lastNoteId);
       }
       else {
         lastRiders = new Array();
         lastTime   = timeoutSeconds;
         lastNoteId = noteMessage.note_id;
-        console.log('Adding slider to play in ', timeoutSeconds, ' seconds');
+        //console.log('Adding slider to play in ', timeoutSeconds, ' seconds');
         (function(riders) {
           sliderTimeouts.push(setTimeout(function () {
             addSlider(noteMessage.note_id, noteMessage.track,
@@ -301,7 +298,6 @@ function addSlider(id, track, message, riders) {
   var sliders = document.getElementById("sliders");
   var slider = buildSlider(id, parseInt(track), message);
 
-  console.log("Adding slider with riders:", riders);
   // Set the time to remove the slider
   slider.removeTime = Date.now() + sliderTimeSecs * 1000;
   slider.riders     = riders;
@@ -320,7 +316,6 @@ function addSlider(id, track, message, riders) {
   setTimeout(function() {
     var index = allSliders.map(function(s) { return s.id; }).indexOf(id);
     var slider = allSliders[index];
-    console.log("Removing slider at index", index);
     if (!slider.pressed ||
         'offset' in slider && Math.abs(slider.offset) > hitThreshold) {
       score.misses++;
@@ -341,7 +336,7 @@ function addSlider(id, track, message, riders) {
 
 // Handle button presses on all tracks
 function buttonPress(track) {
-  console.log("Button press on track", track);
+  //console.log("Button press on track", track);
 
   var slider = allSliders.find(s => !s.pressed && s.track === track);
 
@@ -354,10 +349,10 @@ function buttonPress(track) {
     var timeOffset = 0;
     if (slider.removeTime != null) {
       timeOffset = currentTime - slider.removeTime;
-      console.log("Too late by", currentTime - slider.removeTime);
+      //console.log("Too late by", currentTime - slider.removeTime);
     } else {
       timeOffset = -((slider.addTime + (sliderTimeSecs * 1000)) - currentTime);
-      console.log("Too early by", (slider.addTime + (sliderTimeSecs * 1000)) - currentTime);
+      //console.log("Too early by", (slider.addTime + (sliderTimeSecs * 1000)) - currentTime);
     }
 
     // Send the message
@@ -370,7 +365,6 @@ function buttonPress(track) {
         time_offset: timeOffset
       };
       publishPlayNoteMessage(noteMsg);
-      console.log("Playing", noteMsg.note, slider.riders);
       if (slider.riders.length) {
         for (let rider of slider.riders) {
           console.log("Playing rider:", rider.message);
