@@ -64,7 +64,11 @@ function setup() {
 
 function mainLoop() {
 
-  $('body').bind('touchmove', function(event) { event.preventDefault() }); // turns off double-hit zoom
+  $(document).bind('touchmove', function(event) { event.preventDefault();return false; }); // turns off double-hit zoom
+  //$('body').bind('touchend', function(event) { event.preventDefault(); $(this).click(); }); // turns off double-hit zoom
+  document.ontouchmove = function(event){
+    event.preventDefault();
+  };
  
   messaging = new Messaging(
     {
@@ -171,13 +175,13 @@ function enableButtons() {
   if ('ontouchstart' in window || navigator.msMaxTouchPoints) {
     eventName = "touchstart";
   }
-  document.getElementById("button1").addEventListener(eventName, () => buttonPress(1));
-  document.getElementById("button2").addEventListener(eventName, () => buttonPress(2));
-  document.getElementById("button3").addEventListener(eventName, () => buttonPress(3));
-  document.getElementById("button4").addEventListener(eventName, () => buttonPress(4));
-  document.getElementById("button5").addEventListener(eventName, () => buttonPress(5));
-  document.getElementById("button6").addEventListener(eventName, () => buttonPress(6));
-  document.getElementById("button7").addEventListener(eventName, () => buttonPress(7));
+  document.getElementById("button1").addEventListener(eventName, (e) => buttonPress(e,1));
+  document.getElementById("button2").addEventListener(eventName, (e) => buttonPress(e,2));
+  document.getElementById("button3").addEventListener(eventName, (e) => buttonPress(e,3));
+  document.getElementById("button4").addEventListener(eventName, (e) => buttonPress(e,4));
+  document.getElementById("button5").addEventListener(eventName, (e) => buttonPress(e,5));
+  document.getElementById("button6").addEventListener(eventName, (e) => buttonPress(e,6));
+  document.getElementById("button7").addEventListener(eventName, (e) => buttonPress(e,7));
 }
 
 function connected() {
@@ -240,7 +244,7 @@ function addTimedSlider(message) {
 
       // Add the slider 1.5 seconds ahead of time
       var currentTime = messaging.getSyncedTime();
-      var latencyToSymphony = 100;
+      var latencyToSymphony = 200;
       var timeoutSeconds = noteMessage.play_time - currentTime - (sliderTimeSecs * 1000) - latencyToSymphony;
       if (timeoutSeconds < 0) {
         timeoutSeconds = 0;
@@ -335,9 +339,11 @@ function addSlider(id, track, message, riders) {
 }
 
 // Handle button presses on all tracks
-function buttonPress(track) {
+function buttonPress(e, track) {
   //console.log("Button press on track", track);
 
+  e.preventDefault();
+  
   var slider = allSliders.find(s => !s.pressed && s.track === track);
 
   var currentTime = Date.now();
@@ -403,6 +409,8 @@ function buttonPress(track) {
 
     publishSpontaneousNoteMessage(spontaneousNote);
   }
+
+  return false;
 }
 
 function resetScore() {

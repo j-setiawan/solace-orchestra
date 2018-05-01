@@ -293,6 +293,10 @@ class Conductor:
 
     def play_precanned_song(self, songId):
 
+        for song in self.song_list:
+            song['is_playing'] = 0
+        self.song_list[songId]['is_playing'] = 1
+
         # Need to sleep a bit so that the other components can register their
         # subscriptions
         time.sleep(2)
@@ -316,17 +320,20 @@ class Conductor:
             self.solace.sendMessage(topic, message_body)
 
         print(self.song_list[songId])
-        time.sleep(self.song_list[songId]['song_length'] + 8);
+        stopTime = 8000 + self.solace.getTime() + self.song_list[songId]['song_length']*1000
 
-        topic = "orchestra/theatre/" + self.theatre
-        self.solace.sendMessage(topic, {'msg_type': 'complete_song',
-                                        'song_id':  self.currentSongId})
-        self.solace.sendMessage(topic, {'msg_type': 'stop_song',
-                                        'song_id':  self.currentSongId})
-        self.song_list[songId]['is_playing'] = 0
-        del self.currentSongId
-        
-        
+        while self.solace.getTime() < stopTime and self.song_list[songId]['is_playing']:
+            time.sleep(1)
+
+        if self.song_list[songId]['is_playing']:
+            topic = "orchestra/theatre/" + self.theatre
+            self.solace.sendMessage(topic, {'msg_type': 'complete_song',
+                                            'song_id':  self.currentSongId})
+            self.solace.sendMessage(topic, {'msg_type': 'stop_song',
+                                            'song_id':  self.currentSongId})
+            self.song_list[songId]['is_playing'] = 0
+            del self.currentSongId
+                
                 
     def play_song(self, songId):
 
