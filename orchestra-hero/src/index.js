@@ -19,7 +19,7 @@ var musicianName = '';
 var currentChannelId = -1;
 
 var hitThreshold           = 200;
-var notesTooCloseThreshold = 100;
+var notesTooCloseThreshold = 200;
 var score;
 
 // Amount of time it takes the slider to slide down the track
@@ -196,6 +196,7 @@ function connected() {
 
 function receiveMusicScore(topic, message) {
   // Sent by the conductor on a per channel basis to let all musicians know what to play and when to play it
+  console.log("Got score");
   addTimedSlider(message);
 }
 
@@ -261,7 +262,6 @@ function addTimedSlider(message) {
         lastRiders = new Array();
         lastTime   = timeoutSeconds;
         lastNoteId = noteMessage.note_id;
-        //console.log('Adding slider to play in ', timeoutSeconds, ' seconds');
         (function(riders) {
           sliderTimeouts.push(setTimeout(function () {
             addSlider(noteMessage.note_id, noteMessage.track,
@@ -373,7 +373,6 @@ function buttonPress(e, track) {
       publishPlayNoteMessage(noteMsg);
       if (slider.riders.length) {
         for (let rider of slider.riders) {
-          console.log("Playing rider:", rider.message);
           let riderMsg = {
             msg_type: 'play_note',
             note:     rider.message.note_id,
@@ -446,9 +445,8 @@ function updateScore() {
     );
   }
 
-  console.log(table);
   jst("#score").replaceChild(table);
-  //$("#score").html(scoreDisplay);
+
 }
 
 function uuid() {
