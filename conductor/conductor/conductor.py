@@ -123,6 +123,7 @@ class Conductor:
                 info['song_length'] = math.ceil(midi.length)
 
             tempoList = []
+            channelsSeen = {}
             for channelIdx in range(len(midi.tracks)):
 
                 channel     = midi.tracks[channelIdx]
@@ -188,8 +189,7 @@ class Conductor:
                     noteInfo['duration']  = int(1000 * noteLen)
                     noteInfo['play_time'] = int(1000 * noteInfo['start']) + self.game_controller_play_offset_msec
                     noteInfo['start']     = int(1000 * noteInfo['start'])
-                    
-                        
+            
                 if notes:
                     channelInfo     = {}
                     fullChannelInfo = {}
@@ -206,8 +206,10 @@ class Conductor:
                     channelInfo['program'] = program_change.program
                     all_instruments.append(program_change.program)
 
-                    info['song_channels'].append(channelInfo)
-                    fullNotesPerChannel.append(fullChannelInfo)
+                    if not str(channelNum) in channelsSeen:
+                        channelsSeen[str(channelNum)] = 1
+                        info['song_channels'].append(channelInfo)
+                        fullNotesPerChannel.append(fullChannelInfo)
 
             info['song_id']     = song_id
 
@@ -246,6 +248,7 @@ class Conductor:
         self.currentSongId = songId
 
         self.solace.subscribe("orchestra/theatre/" + str(theatreId))
+        self.solace.subscribe("orchestra/theatre/default")
         self.solace.sendResponse(rxMessage, {})
 
         self.songThread = threading.Thread(target=self.play_precanned_song, args=[songId])
@@ -293,6 +296,10 @@ class Conductor:
 
     def play_precanned_song(self, songId):
 
+        for song in self.song_list:
+            song['is_playing'] = 0
+        self.song_list[songId]['is_playing'] = 1
+
         # Need to sleep a bit so that the other components can register their
         # subscriptions
         time.sleep(2)
@@ -312,21 +319,23 @@ class Conductor:
                 'note_list': notes
             }
             topic = "orchestra/theatre/" + self.theatre + "/" + str(channel['notes'][0]['channel'])
-            # print("Sending note list on ", channel['notes'][0]['channel'], topic)
+            print("Sending note list on ", channel['notes'][0]['channel'], topic)
             self.solace.sendMessage(topic, message_body)
 
-        print(self.song_list[songId])
-        time.sleep(self.song_list[songId]['song_length'] + 8);
+        stopTime = 8000 + self.solace.getTime() + self.song_list[songId]['song_length']*1000
 
-        topic = "orchestra/theatre/" + self.theatre
-        self.solace.sendMessage(topic, {'msg_type': 'complete_song',
-                                        'song_id':  self.currentSongId})
-        self.solace.sendMessage(topic, {'msg_type': 'stop_song',
-                                        'song_id':  self.currentSongId})
-        self.song_list[songId]['is_playing'] = 0
-        del self.currentSongId
-        
-        
+        while (self.solace.getTime() < stopTime) and self.song_list[songId]['is_playing']:
+            time.sleep(1)
+
+        if self.song_list[songId]['is_playing']:
+            topic = "orchestra/theatre/" + self.theatre
+            self.solace.sendMessage(topic, {'msg_type': 'complete_song',
+                                            'song_id':  self.currentSongId})
+            self.solace.sendMessage(topic, {'msg_type': 'stop_song',
+                                            'song_id':  self.currentSongId})
+            self.song_list[songId]['is_playing'] = 0
+            del self.currentSongId
+                
                 
     def play_song(self, songId):
 
