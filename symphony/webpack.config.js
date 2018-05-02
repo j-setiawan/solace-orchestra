@@ -34,9 +34,7 @@ module.exports = {
             },
             {
                 test: /\.(png|svg|jpg|gif)$/,
-                use: [
-                    'file-loader'
-                ]
+                loader: "file-loader?name=/assets/[name].[ext]"
             },
             {
                 test: /\.(wav|woff|woff2|eot|ttf|otf)$/,

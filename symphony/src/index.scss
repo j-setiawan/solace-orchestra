@@ -36,6 +36,24 @@ $colours:
   .colour#{$i} { background-color: nth($colours, $i); }
 }
 
+body,
+html {
+  height: 100%;
+  font-family: 'Roboto', sans-serif;
+  font-size: 24px;
+}
+
+body {
+  background-color: #08325c;
+  justify-content: left;
+}
+
+.heading {
+    color: #CCCCCC;
+    margin: 10px 0px;
+    text-align: center;
+}
+
 .slider {
   height: 15px;
   width: 15px;

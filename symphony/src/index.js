@@ -1,4 +1,5 @@
 import './index.scss';
+import '../assets/solaceSymphonyInverted.png';
 import Messaging      from "../../common/messaging";
 
 
