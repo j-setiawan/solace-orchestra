@@ -142,7 +142,9 @@ class Dashboard {
       this.conductors = Object.values(this.conductorMap);
 
       componentAdded = this.conductorMap[message.client_id];
-        
+
+      this.sortSongs();
+      
       //console.log("Registered:", this.songs, message);
       jst.update("conductor");
       jst.update("song");
@@ -161,6 +163,10 @@ class Dashboard {
 
       componentAdded = this.musicianMap[message.client_id];
 
+
+      componentAdded.checkbox = () => templates.musicianEnabled(this, componentAdded);
+      componentAdded.events   = {click: e => this.musicianCheckboxClicked(componentAdded)};
+      
       this.musicians = Object.values(this.musicianMap);
       jst.update("musician");
       
@@ -213,6 +219,18 @@ class Dashboard {
     
   }
 
+  sortSongs() {
+    this.songs = this.songs.sort((a, b) => {
+      if (a.song_name < b.song_name) {
+        return -1;
+      }
+      if (a.song_name > b.song_name) {
+        return 1;
+      }
+      return 0;
+    });
+  }
+
   removeComponent(component) {
     if (component.component_type === "conductor") {
       delete this.conductorMap[component.client_id];
@@ -237,6 +255,7 @@ class Dashboard {
         }
       });
       this.songs = newSongs;
+      this.sortSongs();
       jst.update("song");
     }
     else if (component.component_type === "musician") {
@@ -399,7 +418,19 @@ class Dashboard {
       this.startSong(song);
     }
   }
-
+  
+  musicianCheckboxClicked(musician) {
+    if (musician.disabled) {
+      musician.state    = "idle";
+      musician.disabled = false;
+    }
+    else {
+      musician.state    = "disabled";
+      musician.disabled = true;
+    }
+    jst.update("musician");
+  }
+  
   stopCurrentSong() {
     this.sendStopSongMessage();
     this.unselectPlayingSong();
@@ -474,6 +505,9 @@ class Dashboard {
 
     let index = 0;
     for (let component of this.musicians) {
+      if (component.disabled) {
+        continue;
+      }
       component.state = "waiting";
       let txMsg = Object.assign({}, msg);
       txMsg.channel_id = song.channelList[index++].channel_id;

@@ -87,6 +87,7 @@ export default templates = {
                                      {title: "Name", name: "song_name"},
                                      {title: "Length", name: "song_length", format: formatters.secsToTime},
                                      {title: "# Channels", name: "numChannels"},
+                                     {title: "Conductor", name: "conductor_name"},
                                    ],
                                    model: data.songs
                                  })
@@ -116,6 +117,7 @@ export default templates = {
   musicianBody: (opts, data) => $div({cn: 'pane-body'},
                                    templates.table({
                                      fields: [
+                                       {title: "", name: "checkbox"},
                                        {title: "Name", name: "name"},
                                        {title: "Channel", name: "channel_id"},
                                        {title: "Hits", name: "hits"},
@@ -152,6 +154,13 @@ export default templates = {
                                    "fa-stop-circle" :
                                    "fa-play-circle song-action-inactive" :
                                    "fa-play-circle")
+                                 }),
+
+  musicianEnabled: (data, musician) => $i({events: musician.events,
+                                           cn: "musician-action-checkbox fa " +
+                                           (musician.disabled ?
+                                            "fa-square" :
+                                            "fa-check-square")
                                  }),
 
 };
