@@ -6,6 +6,7 @@ import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../css/hero.scss';
 import $ from 'jquery';
+import templates from './templates';
 
 var myId = 'orchestra-hero-' + uuid();
 
@@ -20,7 +21,7 @@ var currentChannelId = -1;
 
 var hitThreshold           = 200;
 var notesTooCloseThreshold = 100;
-var score;
+var score = {};
 
 // Amount of time it takes the slider to slide down the track
 var sliderTimeSecs = 1.5;
@@ -58,6 +59,7 @@ function addDemoSliders() {
 }
 
 function setup() {
+  jst("body").replaceChild(templates.page(score));
   resetScore();
   mainLoop();
 }
@@ -410,6 +412,7 @@ function resetScore() {
     hits:    0,
     misses:  0,
     total:   0,
+    percent: 0,
     inARow:  0
   };
   updateScore();
@@ -418,29 +421,18 @@ function resetScore() {
 function updateScore() {
   let scoreDisplay = "";
 
-  let table = $table(
-    $tr(
-      $th("Hits"),
-      $td(score.hits)
-    ),
-    $tr(
-      $th("Misses"),
-      $td(score.misses)
-    )
-  );
-  
   let total = score.hits+score.misses;
-
+  score.percent = (100.0*score.hits/(total)).toFixed(0);
+  
   if (total) {
-    table.appendChild(
-      $th("Percent"),
-      $td((100.0*score.hits/(total)).toFixed(0) + "%")
-    );
+    score.percent = (100.0*score.hits/(total)).toFixed(0);
+  }
+  else {
+    score.percent = 0;
   }
 
-  console.log(table);
-  jst("#score").replaceChild(table);
-  //$("#score").html(scoreDisplay);
+  jst.update("score", score);
+
 }
 
 function uuid() {
