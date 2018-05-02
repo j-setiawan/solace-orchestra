@@ -256,6 +256,7 @@ function addTimedSlider(message) {
       if ((timeoutSeconds - lastTime) < notesTooCloseThreshold && lastRiders) {
         // Notes too close together in time - just add this note
         // as a rider on the last one
+        console.log("Adding rider", noteMessage);
         lastRiders.push({
           message:   noteMessage
         });
@@ -264,6 +265,7 @@ function addTimedSlider(message) {
         lastRiders = new Array();
         lastTime   = timeoutSeconds;
         lastNoteId = noteMessage.note_id;
+        console.log("Adding note ", noteMessage);
         (function(riders) {
           sliderTimeouts.push(setTimeout(function () {
             addSlider(noteMessage.note_id, noteMessage.track,

@@ -34,7 +34,7 @@ export default templates = {
                         templates.body(data)),
 
   header: (data) => $div({cn: 'header'},
-                         env.title
+                         env.title + " Dashboard"
                         ),
 
   body: (data) => $div({cn: 'body'},

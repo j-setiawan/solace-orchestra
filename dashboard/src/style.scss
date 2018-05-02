@@ -7,6 +7,7 @@ html, body {
 }
 
 body {
+    font-family: 'Roboto', Arial, sans-serif;
     margin:     0px;
     padding:    0px;
 }
@@ -28,15 +29,13 @@ th {
 }
 
 .header {
-    background-color: black;
-    font-family: Arial;
+    background-color: #04715c;
     font-size:   20pt;
     padding:     5px;
     color:       white;
 }
 
 .body {
-    font-family: Arial;
     font-size:   20pt;
     padding:     0px;
     margin:      0px;
@@ -44,7 +43,7 @@ th {
 
 .pane {
     position: relative;
-    border: 0px solid black;
+    border: 0px solid #04715c;
     padding: 0px;
     margin: 0px;
     font-size: 16pt;
@@ -61,7 +60,7 @@ th {
     top: 0px;
     left: 0px;
     right: 0px;
-    background-color: black;
+    background-color: #04715c;
     color: white;
     padding: 5px;
     z-index: 1;
