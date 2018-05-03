@@ -14,7 +14,7 @@ let formatters = {
 
 export default templates = {
 
-  page:   (score) =>
+  page:   (score, number) =>
     $div(
       templates.dialog(),
       $div(
@@ -29,6 +29,10 @@ export default templates = {
             ),
             $div(
               {id: "sliders"}
+            ),
+            $div(
+              {id: "countdown"},
+              jst.stamp("number", templates.countdown, number)  
             )
           ),
           
@@ -39,7 +43,7 @@ export default templates = {
           $div(
             {id: "score"},
             jst.stamp("score", templates.scoreTable, score) 
-          )
+          ),
         )
       )
     ),
@@ -67,6 +71,11 @@ export default templates = {
         )        
         
       )   
+    ),
+  
+  countdown: (number) =>
+    $div(
+      number
     ),
 
   scoreTable: (score) =>

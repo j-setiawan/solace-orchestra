@@ -399,3 +399,13 @@ div#buttons {
 #score td {
     padding-left: 8px;
 }
+
+#countdown {
+  position: absolute;
+  color: white;
+  left: 140px;
+  top: -20px;
+  padding: 0px;
+  font-size: 800%;
+  transform: rotateZ(-90deg);
+}

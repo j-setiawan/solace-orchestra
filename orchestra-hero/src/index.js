@@ -1,6 +1,6 @@
-import env       from '../../common/env';
+import env from '../../common/env';
 import Messaging from '../../common/messaging';
-import jst       from '../../common/jayesstee';
+import jst from '../../common/jayesstee';
 import '../assets/solaceSymphonyInverted.png';
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -19,7 +19,7 @@ var syncReady = false;
 var musicianName = '';
 var currentChannelId = -1;
 
-var hitThreshold           = 200;
+var hitThreshold = 200;
 var notesTooCloseThreshold = 200;
 var score = {};
 
@@ -66,26 +66,28 @@ function setup() {
 
 function mainLoop() {
 
-  $(document).bind('touchmove', function(event) { event.preventDefault();return false; }); // turns off double-hit zoom
+  $(document).bind('touchmove', function (event) {
+    event.preventDefault();
+    return false;
+  }); // turns off double-hit zoom
   //$('body').bind('touchend', function(event) { event.preventDefault(); $(this).click(); }); // turns off double-hit zoom
-  document.ontouchmove = function(event){
+  document.ontouchmove = function (event) {
     event.preventDefault();
   };
- 
-  messaging = new Messaging(
-    {
+
+  messaging = new Messaging({
       callbacks: {
-        connected:     (...args) => connected(...args),
-        note_list:   (...args) => receiveMusicScore(...args),
-        start_song:   (...args) => startSong(...args),
-        stop_song:   (...args) => stopSong(...args),
+        connected: (...args) => connected(...args),
+        note_list: (...args) => receiveMusicScore(...args),
+        start_song: (...args) => startSong(...args),
+        stop_song: (...args) => stopSong(...args),
         register_response: (...args) => registerResponse(...args),
         reregister: (...args) => reregister(...args),
       }
     }
 
   );
-    
+
   myId = messaging.myId;
 
   // Start the demo
@@ -134,21 +136,24 @@ function startSong(topic, message) {
   if (scoreUpdater) {
     clearInterval(scoreUpdater);
   }
-  
+
   scoreUpdater = setInterval(function () {
     let total = score.hits + score.misses;
-    let percent = total ? (100.0*score.hits/total).toFixed(0) : "";
+    let percent = total ? (100.0 * score.hits / total).toFixed(0) : "";
     messaging.sendMessage(`orchestra/theatre/${theatreId}/score_update`, {
-      'msg_type':   'score_update',
+      'msg_type': 'score_update',
       'channel_id': channelId,
-      'name':       musicianName,
-      'hits':       score.hits,
-      'misses':     score.misses,
-      'percent':    percent
+      'name': musicianName,
+      'hits': score.hits,
+      'misses': score.misses,
+      'percent': percent
     });
   }, 2500);
 
-  messaging.sendResponse(message, {}); 
+  messaging.sendResponse(message, {});
+
+  // Show the countdown
+  startCountdown();
 }
 
 function stopSong(topic, message) {
@@ -177,13 +182,13 @@ function enableButtons() {
   if ('ontouchstart' in window || navigator.msMaxTouchPoints) {
     eventName = "touchstart";
   }
-  document.getElementById("button1").addEventListener(eventName, (e) => buttonPress(e,1));
-  document.getElementById("button2").addEventListener(eventName, (e) => buttonPress(e,2));
-  document.getElementById("button3").addEventListener(eventName, (e) => buttonPress(e,3));
-  document.getElementById("button4").addEventListener(eventName, (e) => buttonPress(e,4));
-  document.getElementById("button5").addEventListener(eventName, (e) => buttonPress(e,5));
-  document.getElementById("button6").addEventListener(eventName, (e) => buttonPress(e,6));
-  document.getElementById("button7").addEventListener(eventName, (e) => buttonPress(e,7));
+  document.getElementById("button1").addEventListener(eventName, (e) => buttonPress(e, 1));
+  document.getElementById("button2").addEventListener(eventName, (e) => buttonPress(e, 2));
+  document.getElementById("button3").addEventListener(eventName, (e) => buttonPress(e, 3));
+  document.getElementById("button4").addEventListener(eventName, (e) => buttonPress(e, 4));
+  document.getElementById("button5").addEventListener(eventName, (e) => buttonPress(e, 5));
+  document.getElementById("button6").addEventListener(eventName, (e) => buttonPress(e, 6));
+  document.getElementById("button7").addEventListener(eventName, (e) => buttonPress(e, 7));
 }
 
 function connected() {
@@ -230,10 +235,10 @@ function publishSpontaneousNoteMessage(messageJSon) {
 function registerMusician(musicianName) {
   var publisherTopic = `orchestra/registration`;
   var messageJson = {
-      msg_type:       'register',
-      component_type: 'musician',
-      client_id: myId,
-      name: musicianName
+    msg_type: 'register',
+    component_type: 'musician',
+    client_id: myId,
+    name: musicianName
   };
   messaging.sendMessage(publisherTopic, messageJson);
 }
@@ -258,18 +263,17 @@ function addTimedSlider(message) {
         // as a rider on the last one
         console.log("Adding rider", noteMessage);
         lastRiders.push({
-          message:   noteMessage
+          message: noteMessage
         });
-      }
-      else {
+      } else {
         lastRiders = new Array();
-        lastTime   = timeoutSeconds;
+        lastTime = timeoutSeconds;
         lastNoteId = noteMessage.note_id;
         console.log("Adding note ", noteMessage);
-        (function(riders) {
+        (function (riders) {
           sliderTimeouts.push(setTimeout(function () {
             addSlider(noteMessage.note_id, noteMessage.track,
-                      noteMessage, riders);
+              noteMessage, riders);
           }, timeoutSeconds));
         })(lastRiders);
       }
@@ -278,18 +282,18 @@ function addTimedSlider(message) {
 }
 
 function addDemoSlider(id, track, timeout) {
-  setTimeout(function() {
+  setTimeout(function () {
     addSlider(id, track);
-  }, timeout);   
+  }, timeout);
 }
 
 function buildSlider(id, track, message) {
   var slider = {};
   slider.element = document.createElement("div");
-  slider.track   = track;
-  slider.id      = id;
+  slider.track = track;
+  slider.id = id;
   slider.message = message;
-  
+
   if (typeof message !== 'undefined') {
     slider.pressed = false;
   } else {
@@ -308,28 +312,29 @@ function addSlider(id, track, message, riders) {
 
   // Set the time to remove the slider
   slider.removeTime = Date.now() + sliderTimeSecs * 1000;
-  slider.riders     = riders;
+  slider.riders = riders;
 
   sliders.appendChild(slider.element);
 
   allSliders.push(slider);
 
   // Remove the slider after it hits the end
-  setTimeout(function() {
+  setTimeout(function () {
     slider.element.remove();
     // slider = {};
   }, sliderTimeSecs * 1000);
 
   // Remove the event
-  setTimeout(function() {
-    var index = allSliders.map(function(s) { return s.id; }).indexOf(id);
+  setTimeout(function () {
+    var index = allSliders.map(function (s) {
+      return s.id;
+    }).indexOf(id);
     var slider = allSliders[index];
     if (!slider.pressed ||
-        'offset' in slider && Math.abs(slider.offset) > hitThreshold) {
+      'offset' in slider && Math.abs(slider.offset) > hitThreshold) {
       score.misses++;
       score.inARow = 0;
-    }
-    else {
+    } else {
       score.hits++;
       score.inARow++;
     }
@@ -339,7 +344,7 @@ function addSlider(id, track, message, riders) {
   }, sliderTimeSecs * 1000 + 200);
 
   return slider;
-  
+
 }
 
 // Handle button presses on all tracks
@@ -347,7 +352,7 @@ function buttonPress(e, track) {
   //console.log("Button press on track", track);
 
   e.preventDefault();
-  
+
   var slider = allSliders.find(s => !s.pressed && s.track === track);
 
   var currentTime = Date.now();
@@ -379,7 +384,7 @@ function buttonPress(e, track) {
         for (let rider of slider.riders) {
           let riderMsg = {
             msg_type: 'play_note',
-            note:     rider.message.note_id,
+            note: rider.message.note_id,
             time_offset: timeOffset
           };
           publishPlayNoteMessage(riderMsg);
@@ -398,16 +403,14 @@ function buttonPress(e, track) {
       client_id: myId,
       current_time: currentTime,
       msg_type: 'note',
-      note_list: [
-        {
-          program: 0,
-          track: track,
-          note: noteArray[track - 1],
-          channel: 0,
-          duration: 750,
-          play_time: currentTime
-        }
-      ]
+      note_list: [{
+        program: 0,
+        track: track,
+        note: noteArray[track - 1],
+        channel: 0,
+        duration: 750,
+        play_time: currentTime
+      }]
     };
 
     publishSpontaneousNoteMessage(spontaneousNote);
@@ -418,11 +421,11 @@ function buttonPress(e, track) {
 
 function resetScore() {
   score = {
-    hits:    0,
-    misses:  0,
-    total:   0,
+    hits: 0,
+    misses: 0,
+    total: 0,
     percent: 0,
-    inARow:  0
+    inARow: 0
   };
   updateScore();
 }
@@ -430,13 +433,12 @@ function resetScore() {
 function updateScore() {
   let scoreDisplay = "";
 
-  let total = score.hits+score.misses;
-  score.percent = (100.0*score.hits/(total)).toFixed(0);
-  
+  let total = score.hits + score.misses;
+  score.percent = (100.0 * score.hits / (total)).toFixed(0);
+
   if (total) {
-    score.percent = (100.0*score.hits/(total)).toFixed(0);
-  }
-  else {
+    score.percent = (100.0 * score.hits / (total)).toFixed(0);
+  } else {
     score.percent = 0;
   }
 
@@ -444,13 +446,28 @@ function updateScore() {
 
 }
 
+function startCountdown() {
+  countDownByOne(5);
+}
+
+function countDownByOne(num) {
+  if (num <= 0) {
+    jst.update("number", "");
+    return;
+  }
+  jst.update("number", num.toString());
+  var newNum = num - 1;
+  setTimeout(() => countDownByOne(newNum), 1000);
+}
+
 function uuid() {
-  return 'xxxxxxxx'.replace(/[x]/g, function(c) {
-    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+  return 'xxxxxxxx'.replace(/[x]/g, function (c) {
+    var r = Math.random() * 16 | 0,
+      v = c == 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
 }
 
-$(document).ready(function(){
-   setup();
+$(document).ready(function () {
+  setup();
 });
