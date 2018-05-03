@@ -152,6 +152,9 @@ class Symphony {
         // How much we penalize notes that weren't hit
         this.velocityDerateFactor = 8;
 
+        // Map of channels that should be played full volume because there are no musicians
+        this.activeChannels = {};
+
         console.log("Loading " + instruments.length + " instruments...");
         let lastProgress = 0;
         MIDI.loadPlugin({
@@ -195,8 +198,14 @@ class Symphony {
 
     }
 
+    rxNoMusicianNotification(topic, message) {
+      this.noMusicianChannels[message.channel_id] = true;
+      console.log("NO MUSICIANS:", this.noMusicianChannels);
+    }
+
     rxStartSong(topic, message) {
         let channelList = [];
+        this.activeChannels = {};
         for (let key of Object.keys(message.song_channels)) {
             channelList.push(message.song_channels[key]["channel_id"]);
         }
@@ -207,11 +216,13 @@ class Symphony {
     }
 
     rxStartPlayer(topic, message) {
-        addPlayer(message.name, message.channel_id)
+        // Remove players for now until they are fixed
+        //addPlayer(message.name, message.channel_id);
+        this.activeChannels[message.channel_id] = true;
     }
 
     rxScoreUpdate(topic, message) {
-        updateScore(message.name, message.channel_id, message);
+        //updateScore(message.name, message.channel_id, message);
     }
 
     rxCompleteSong(topic, message) {
@@ -271,7 +282,7 @@ class Symphony {
                         MIDI.programChange(safeNote.channel, safeNote.program);
                     }
                     MIDI.setVolume(safeNote.channel, 127);
-                    MIDI.noteOn(safeNote.channel, safeNote.note, hitNotes.hasOwnProperty(note.note_id) ? safeNote.velocity : safeNote.velocity/self.velocityDerateFactor, 0);
+                    MIDI.noteOn(safeNote.channel, safeNote.note, !self.activeChannels[safeNote.channel] || hitNotes.hasOwnProperty(note.note_id) ? safeNote.velocity : safeNote.velocity/self.velocityDerateFactor, 0);
                     MIDI.noteOff(safeNote.channel, safeNote.note, safeNote.duration/1000);
                 }, delay));
             })(note);

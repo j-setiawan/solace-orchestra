@@ -504,6 +504,7 @@ class Dashboard {
     }
 
     let index = 0;
+    let count = 0;
     for (let component of this.musicians) {
       if (component.disabled) {
         continue;
@@ -512,7 +513,7 @@ class Dashboard {
       let txMsg = Object.assign({}, msg);
       txMsg.channel_id = song.channelList[index++].channel_id;
       component.channel_id = txMsg.channel_id;
-      console.log("SENDING START SONG:", txMsg, component);
+      count++;
       this.messaging.sendMessage(`orchestra/p2p/${component.client_id}`,
                                  txMsg,
                                  (txMessage, rxMessage) => {
@@ -522,6 +523,7 @@ class Dashboard {
         index = 0;
       }
     }
+
     jst.update("musician");
     
   }
