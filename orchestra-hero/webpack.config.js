@@ -40,7 +40,7 @@ module.exports = {
             },
             {
                 test: /\.(png|svg|jpg|gif)$/,
-                loader: "file-loader?name=/assets/[name].[ext]"
+                loader: "url-loader?name=/assets/[name].[ext]"
             },
             {
                 test: /\.(wav|woff|woff2|eot|ttf|otf)$/,

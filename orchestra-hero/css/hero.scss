@@ -291,7 +291,9 @@ html {
 }
 
 body {
-  background-color: #08325c;
+  /*background-color: #93c3d6;*/
+  background-image: url("../assets/background2.png");
+  z-index: -99;
   justify-content: left;
   align-items: center;
 }
