@@ -14,7 +14,7 @@ let formatters = {
 
 export default templates = {
 
-  page:   (score, instrumentInfo) =>
+  page:   (score, number, instrumentInfo) =>
     $div(
       templates.dialog(),
       $div(
@@ -29,6 +29,10 @@ export default templates = {
             ),
             $div(
               {id: "sliders"}
+            ),
+            $div(
+              {id: "countdown"},
+              jst.stamp("number", templates.countdown, number)  
             )
           ),
           
@@ -50,7 +54,7 @@ export default templates = {
 
   dialog:  () =>
     $div(
-      {cn:"modal fade", id:"getNameModal", tabindex:"-1", role:"dialog", "aria-labelledby":"exampleModalLabel", "aria-hidden":"true"},
+      {cn:"modal fade", "data-backdrop":"static", "data-keyboard":"false", id:"getNameModal", tabindex:"-1", role:"dialog", "aria-labelledby":"exampleModalLabel", "aria-hidden":"true"},
       $div(
         {cn:"modal-dialog modal-sm", role:"document"},
         $div(
@@ -71,6 +75,11 @@ export default templates = {
         )        
         
       )   
+    ),
+  
+  countdown: (number) =>
+    $div(
+      number
     ),
 
   scoreTable: (score) =>

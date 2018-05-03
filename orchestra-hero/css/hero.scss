@@ -408,3 +408,13 @@ div#buttons {
     padding: 0px;
     font-size: 60%;
 }
+
+#countdown {
+  position: absolute;
+  color: white;
+  left: 140px;
+  top: -20px;
+  padding: 0px;
+  font-size: 800%;
+  transform: rotateZ(-90deg);
+}
