@@ -87,6 +87,10 @@ export default templates = {
       $tr(
         $th("Misses"),
         $td(score.misses)
+      ),
+      $tr(
+        $th("Percent"),
+        $td(score.percent + "%")
       )
     )
 

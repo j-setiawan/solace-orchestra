@@ -20,7 +20,8 @@ class Dashboard {
     this.musicianMap  = {};
     this.symphonyMap  = {};
 
-    this.status       = {body: ""};
+    this.status            = {body: ""};
+    this.allMusicianToggle = true;
     
     this.theatreId       = 1;
     this.startTimeOffset = 10000;
@@ -142,7 +143,9 @@ class Dashboard {
       this.conductors = Object.values(this.conductorMap);
 
       componentAdded = this.conductorMap[message.client_id];
-        
+
+      this.sortSongs();
+      
       //console.log("Registered:", this.songs, message);
       jst.update("conductor");
       jst.update("song");
@@ -161,6 +164,10 @@ class Dashboard {
 
       componentAdded = this.musicianMap[message.client_id];
 
+
+      componentAdded.checkbox = () => templates.musicianEnabled(this, componentAdded);
+      componentAdded.events   = {click: e => this.musicianCheckboxClicked(componentAdded)};
+      
       this.musicians = Object.values(this.musicianMap);
       jst.update("musician");
       
@@ -213,6 +220,24 @@ class Dashboard {
     
   }
 
+  sortSongs() {
+    this.songs = this.songs.sort((a, b) => {
+      if (a.song_name < b.song_name) {
+        return -1;
+      }
+      if (a.song_name > b.song_name) {
+        return 1;
+      }
+      return 0;
+    });
+  }
+
+  sortMusicians() {
+    this.musicians = this.musicians.sort((a, b) => {
+      return parseInt(b.percent) - parseInt(a.percent);
+    });
+  }
+
   removeComponent(component) {
     if (component.component_type === "conductor") {
       delete this.conductorMap[component.client_id];
@@ -237,6 +262,7 @@ class Dashboard {
         }
       });
       this.songs = newSongs;
+      this.sortSongs();
       jst.update("song");
     }
     else if (component.component_type === "musician") {
@@ -311,12 +337,12 @@ class Dashboard {
   }
   
   rxScoreUpdate(topic, message) {
-    console.log("Received scoreUpdate message: ", message);
     let musician = this.musicianMap[message.client_id];
     if (musician) {
       musician.hits    = message.hits;
       musician.misses  = message.misses;
       musician.percent = message.percent;
+      this.sortMusicians();
       jst.update("musician");
     }
   }
@@ -399,7 +425,32 @@ class Dashboard {
       this.startSong(song);
     }
   }
+  
+  musicianCheckboxClicked(musician) {
+    if (musician.disabled) {
+      musician.state    = "idle";
+      musician.disabled = false;
+    }
+    else {
+      musician.state    = "disabled";
+      musician.disabled = true;
+    }
+    jst.update("musician");
+  }
 
+  toggleAllMusicians() {
+    if (this.allMusicianToggle) {
+      this.allMusicianToggle = false;
+    }
+    else {
+      this.allMusicianToggle = true;
+    }
+    for (let musician of this.musicians) {
+      musician.disabled = !this.allMusicianToggle;
+    }
+    jst.update("musician");
+  }
+  
   stopCurrentSong() {
     this.sendStopSongMessage();
     this.unselectPlayingSong();
@@ -473,12 +524,16 @@ class Dashboard {
     }
 
     let index = 0;
+    let count = 0;
     for (let component of this.musicians) {
+      if (component.disabled) {
+        continue;
+      }
       component.state = "waiting";
       let txMsg = Object.assign({}, msg);
       txMsg.channel_id = song.channelList[index++].channel_id;
       component.channel_id = txMsg.channel_id;
-      console.log("SENDING START SONG:", txMsg, component);
+      count++;
       this.messaging.sendMessage(`orchestra/p2p/${component.client_id}`,
                                  txMsg,
                                  (txMessage, rxMessage) => {
@@ -488,6 +543,7 @@ class Dashboard {
         index = 0;
       }
     }
+
     jst.update("musician");
     
   }
