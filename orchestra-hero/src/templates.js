@@ -50,7 +50,7 @@ export default templates = {
 
   dialog:  () =>
     $div(
-      {cn:"modal fade", id:"getNameModal", tabindex:"-1", role:"dialog", "aria-labelledby":"exampleModalLabel", "aria-hidden":"true"},
+      {cn:"modal fade", "data-backdrop":"static", "data-keyboard":"false", id:"getNameModal", tabindex:"-1", role:"dialog", "aria-labelledby":"exampleModalLabel", "aria-hidden":"true"},
       $div(
         {cn:"modal-dialog modal-sm", role:"document"},
         $div(
