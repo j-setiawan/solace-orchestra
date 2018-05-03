@@ -2,6 +2,7 @@ import env from '../../common/env';
 import Messaging from '../../common/messaging';
 import jst from '../../common/jayesstee';
 import '../assets/solaceSymphonyInverted.png';
+import '../assets/background.png';
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../css/hero.scss';
