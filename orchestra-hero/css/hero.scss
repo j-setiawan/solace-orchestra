@@ -291,7 +291,9 @@ html {
 }
 
 body {
-  background-color: #08325c;
+  /*background-color: #93c3d6;*/
+  background-image: url("../assets/background2.png");
+  z-index: -99;
   justify-content: left;
   align-items: center;
 }
@@ -398,6 +400,15 @@ div#buttons {
 
 #score td {
     padding-left: 8px;
+}
+
+#instruments {
+    position: absolute;
+    color: white;
+    left: 30px;
+    top: 11px;
+    padding: 0px;
+    font-size: 60%;
 }
 
 #countdown {

@@ -14,7 +14,7 @@ let formatters = {
 
 export default templates = {
 
-  page:   (score, number) =>
+  page:   (score, number, instrumentInfo) =>
     $div(
       templates.dialog(),
       $div(
@@ -43,8 +43,12 @@ export default templates = {
           $div(
             {id: "score"},
             jst.stamp("score", templates.scoreTable, score) 
-          ),
+          )
         )
+      ),
+      $div(
+        {id: "instruments"},
+        jst.stamp("instruments", templates.instrument, instrumentInfo) 
       )
     ),
 
@@ -91,6 +95,22 @@ export default templates = {
       $tr(
         $th("Percent"),
         $td(score.percent + "%")
+      )
+    ),
+
+  instrument: (instrumentInfo) =>
+    $div(
+      {cn: "instrument-div"},
+      $div("Current Instrument"),
+      $div(
+        {cn: "instrument-select"},
+        $select(
+          {events: instrumentInfo.events},
+          instrumentInfo.list.map(entry => $option(
+            {value: entry.index,
+             properties: entry.selected ? ['selected'] : []},
+            entry.name))
+        )
       )
     )
 
