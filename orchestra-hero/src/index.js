@@ -7,6 +7,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import '../css/hero.scss';
 import $ from 'jquery';
 import templates from './templates';
+import instruments from './instruments';
 
 var myId = 'orchestra-hero-' + uuid();
 
@@ -20,7 +21,10 @@ var musicianName = '';
 
 var hitThreshold           = 200;
 var notesTooCloseThreshold = 200;
-var score = {};
+
+var score          = {};
+var instrumentInfo = {list: []};
+var currentProgram = 0;
 
 // Amount of time it takes the slider to slide down the track
 var sliderTimeSecs = 1.5;
@@ -58,7 +62,8 @@ function addDemoSliders() {
 }
 
 function setup() {
-  jst("body").replaceChild(templates.page(score));
+  makeInstrumentList();
+  jst("body").replaceChild(templates.page(score, instrumentInfo));
   resetScore();
   mainLoop();
 }
@@ -113,6 +118,43 @@ function getName() {
     $('#buttons').show();
     enableButtons();
   }
+}
+
+function makeInstrumentList() {
+  const usedInstruments = [0, 4, 22, 24, 25, 28, 29, 30, 33, 40, 41, 42, 47, 48, 52, 55, 56, 57, 58, 60, 62, 65, 68, 69, 70, 71, 73, 74, 120];
+
+  let index = 0;
+  for (let program of usedInstruments) {
+    let name = instruments[program+1];
+
+    name = name.replace(/_/g, " ");
+    name = toTitleCase(name);
+    
+    instrumentInfo.list.push({
+      index:   index++,
+      program: program,
+      name:    name
+    });
+  }
+
+  // Also handle the callback when changed
+  instrumentInfo.events = {
+    change: e => {
+      setCurrentInstrument(e.target.value);
+    }
+  };
+  
+}
+
+function setCurrentInstrument(instIndex) {
+  let instrument = instrumentInfo.list[instIndex];
+  currentProgram = instrument.program;
+}
+
+
+function toTitleCase(str)
+{
+    return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
 }
 
 function startSong(topic, message) {
@@ -403,7 +445,7 @@ function buttonPress(e, track) {
       msg_type: 'note',
       note_list: [
         {
-          program: 0,
+          program: currentProgram,
           track: track,
           note: noteArray[track - 1],
           channel: 0,

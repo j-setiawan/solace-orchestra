@@ -254,7 +254,7 @@ class Symphony {
             note.current_time = new Date().getMilliseconds();
             note.play_time = note.current_time;
             addTimedSlider(note);
-            if (note.program) {
+            if ('program' in note) {
                 MIDI.programChange(note.channel, note.program);
             }
             MIDI.setVolume(note.channel, 127);
