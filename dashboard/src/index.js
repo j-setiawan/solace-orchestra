@@ -232,6 +232,12 @@ class Dashboard {
     });
   }
 
+  sortMusicians() {
+    this.musicians = this.musicians.sort((a, b) => {
+      return parseInt(b.percent) - parseInt(a.percent);
+    });
+  }
+
   removeComponent(component) {
     if (component.component_type === "conductor") {
       delete this.conductorMap[component.client_id];
@@ -331,12 +337,12 @@ class Dashboard {
   }
   
   rxScoreUpdate(topic, message) {
-    console.log("Received scoreUpdate message: ", message);
     let musician = this.musicianMap[message.client_id];
     if (musician) {
       musician.hits    = message.hits;
       musician.misses  = message.misses;
       musician.percent = message.percent;
+      this.sortMusicians();
       jst.update("musician");
     }
   }

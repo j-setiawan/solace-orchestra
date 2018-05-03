@@ -12,12 +12,11 @@ var myId = 'orchestra-hero-' + uuid();
 
 var scoreUpdater;
 var theatreId = "default";
-var channelId = "0";
+var channelId = 0;
 var messaging;
 var timeRef;
 var syncReady = false;
 var musicianName = '';
-var currentChannelId = -1;
 
 var hitThreshold           = 200;
 var notesTooCloseThreshold = 200;
@@ -119,8 +118,8 @@ function getName() {
 function startSong(topic, message) {
   console.log("Start song ", topic, message);
   resetScore();
-  currentChannelId = message.channel_id;
-  var subscriberTopic = `orchestra/theatre/${theatreId}/${currentChannelId}`;
+  channelId = message.channel_id;
+  var subscriberTopic = `orchestra/theatre/${theatreId}/${channelId}`;
   messaging.subscribe(
     subscriberTopic
   );
@@ -170,6 +169,10 @@ function stopSong(topic, message) {
   // Remove all sliders
   let sliderDiv = document.getElementById("sliders");
   while (sliderDiv.firstChild) sliderDiv.removeChild(sliderDiv.firstChild);
+
+  // Reset to original channel
+  channelId = "0";
+  
 }
 
 function enableButtons() {
