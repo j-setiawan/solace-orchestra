@@ -20,7 +20,8 @@ class Dashboard {
     this.musicianMap  = {};
     this.symphonyMap  = {};
 
-    this.status       = {body: ""};
+    this.status            = {body: ""};
+    this.allMusicianToggle = true;
     
     this.theatreId       = 1;
     this.startTimeOffset = 10000;
@@ -427,6 +428,19 @@ class Dashboard {
     else {
       musician.state    = "disabled";
       musician.disabled = true;
+    }
+    jst.update("musician");
+  }
+
+  toggleAllMusicians() {
+    if (this.allMusicianToggle) {
+      this.allMusicianToggle = false;
+    }
+    else {
+      this.allMusicianToggle = true;
+    }
+    for (let musician of this.musicians) {
+      musician.disabled = !this.allMusicianToggle;
     }
     jst.update("musician");
   }

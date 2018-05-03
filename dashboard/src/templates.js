@@ -117,7 +117,7 @@ export default templates = {
   musicianBody: (opts, data) => $div({cn: 'pane-body'},
                                    templates.table({
                                      fields: [
-                                       {title: "", name: "checkbox"},
+                                       {title: $i({cn: `fa fa-${data.allMusicianToggle?"check-":""}square`, events: {click: (e) => data.toggleAllMusicians(e)}}), name: "checkbox"},
                                        {title: "Name", name: "name"},
                                        {title: "Channel", name: "channel_id"},
                                        {title: "Hits", name: "hits"},
