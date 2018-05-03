@@ -1,6 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const solclientjs = path.resolve(__dirname, '../common/solclient-debug.js');
+const solclientjs = path.resolve(__dirname, '../common/solclient.js');
 
 module.exports = {
   entry: './src/index.js',

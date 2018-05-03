@@ -1,6 +1,6 @@
 import env  from "./env";
 //import mqtt from "../node_modules/mqtt";
-import solace from './solclient-debug.js';
+import solace from './solclient.js';
 
 
 export default class Messaging { 
