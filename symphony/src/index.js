@@ -10,7 +10,7 @@ const colours = ['#0074d9', '#d83439', '#38b439', '#e9cd54', '#811ed1', '#e66224
 // TODO: need to learn this from all conductors at start time rather than
 // hardcoded
 //const instruments = [0, 4, 16, 22, 24, 25, 26, 27, 28, 29, 30, 33, 35, 47, 48, 52, 56, 60, 68, 70, 71, 73, 74, 95, 120]
-const instruments = [0, 4, 22, 24, 25, 28, 29, 30, 33, 40, 41, 42, 47, 48, 52, 55, 56, 57, 58, 60, 62, 65, 68, 69, 70, 71, 73, 74, 120];
+const instruments = [0, 4, 9, 22, 24, 25, 28, 29, 30, 33, 40, 41, 42, 47, 48, 52, 55, 56, 57, 58, 60, 62, 65, 68, 69, 70, 71, 73, 74, 120];
 const line_spacing = 20;
 const allSliders = [];
 const timeouts = [];
@@ -200,7 +200,6 @@ class Symphony {
 
     rxNoMusicianNotification(topic, message) {
       this.noMusicianChannels[message.channel_id] = true;
-      console.log("NO MUSICIANS:", this.noMusicianChannels);
     }
 
     rxStartSong(topic, message) {
@@ -254,9 +253,7 @@ class Symphony {
             note.current_time = new Date().getMilliseconds();
             note.play_time = note.current_time;
             addTimedSlider(note);
-            if ('program' in note) {
-                MIDI.programChange(note.channel, note.program);
-            }
+            MIDI.programChange(note.channel, note.program || 0);
             MIDI.setVolume(note.channel, 127);
 	    MIDI.noteOn(note.channel, note.note, 127, 0);
 	    MIDI.noteOff(note.channel, note.note, 0 + 0.5);
@@ -278,11 +275,10 @@ class Symphony {
                 addTimedSlider(safeNote, delay);
 
                 timeouts.push(setTimeout(function () {
-                    if (safeNote.program) {
-                        MIDI.programChange(safeNote.channel, safeNote.program);
-                    }
+                    MIDI.programChange(safeNote.channel, (safeNote.program || 0));
                     MIDI.setVolume(safeNote.channel, 127);
                     MIDI.noteOn(safeNote.channel, safeNote.note, !self.activeChannels[safeNote.channel] || hitNotes.hasOwnProperty(note.note_id) ? safeNote.velocity : safeNote.velocity/self.velocityDerateFactor, 0);
+//                    MIDI.noteOn(safeNote.channel, safeNote.note, hitNotes.hasOwnProperty(note.note_id) ? safeNote.velocity : safeNote.velocity/self.velocityDerateFactor, 0);
                     MIDI.noteOff(safeNote.channel, safeNote.note, safeNote.duration/1000);
                 }, delay));
             })(note);
