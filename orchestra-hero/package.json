@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:dev": "./node_modules/.bin/webpack --mode development",
-    "build:prod": "./node_modules/.bin/webpack --mode production",
+    "build:prod": "./node_modules/.bin/webpack --config webpack.prod.js --mode production",
     "build": "./node_modules/.bin/webpack --mode development",
     "watch": "./node_modules/.bin/webpack --watch --mode development"
   },
@@ -31,7 +31,8 @@
     "sass-loader": "^6.0.7",
     "webaudio-instruments": "^0.4.1",
     "webpack": "^4.1.1",
-    "webpack-cli": "^2.0.11"
+    "webpack-cli": "^2.0.11",
+    "webpack-merge": "^4.1.2"
   },
   "devDependencies": {
     "css-loader": "^0.28.10",
