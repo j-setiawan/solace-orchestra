@@ -299,12 +299,11 @@ body {
 }
 
 .outermost {
-  left: 120px;
   transform-style: preserve-3d;
-  position: absolute;
   perspective: 500px;
   height: 300px;
   width: 315px;
+  margin: auto;
 }
 
 .outer1 {
@@ -362,14 +361,19 @@ div#buttons {
   left: 371px;
 }
 
+/****
+ image 
+ *****/
 .heading {
   color: #CCCCCC;
   position: absolute;
-  left: 165px;
+  left: 48px;
   top: -5px;
 }
 
-// Change the modal padding to make it smaller
+/****
+ modal 
+ *****/
 .modal-footer {
   padding: 5px;
 }
@@ -382,6 +386,19 @@ div#buttons {
   z-index: 9999;
 }
 
+.col-form-label {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+input.form-control {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+/****
+ score
+  *****/
 #score1 {
   position: absolute;
   left: 380px;
@@ -394,18 +411,27 @@ div#buttons {
     color: white;
     left: 333px;
     top: 11px;
-    padding: 0px;
+    padding: 4px;
     font-size: 60%;
+    background-color: #66668877;
 }
 
 #score td {
     padding-left: 8px;
 }
 
+/****
+ instrument
+  *****/
+.instrument-div {
+  padding: 3px;
+  background-color: #66668877;
+}
+
 #instruments {
     position: absolute;
     color: white;
-    left: 15px;
+    left: -120px;
     top: 11px;
     padding: 0px;
     font-size: 60%;
@@ -431,6 +457,9 @@ div#buttons {
     margin: 6px;
 }
 
+/****
+ countdown
+  *****/
 #countdown {
   position: absolute;
   color: white;
