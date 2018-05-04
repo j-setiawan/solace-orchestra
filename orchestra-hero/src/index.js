@@ -24,7 +24,11 @@ var hitThreshold = 200;
 var notesTooCloseThreshold = 200;
 
 var score          = {};
-var instrumentInfo = {list: []};
+var instrumentInfo = {
+  list:              [],
+  currentInstrument: 0,
+  selectOn:          false
+};
 var currentProgram = 0;
 
 // Amount of time it takes the slider to slide down the track
@@ -124,7 +128,7 @@ function getName() {
 }
 
 function makeInstrumentList() {
-  const usedInstruments = [0, 4, 22, 24, 25, 28, 29, 30, 33, 40, 41, 42, 47, 48, 52, 55, 56, 57, 58, 60, 62, 65, 68, 69, 70, 71, 73, 74, 120];
+  const usedInstruments = [0, 4, 9, 22, 24, 25, 28, 29, 30, 33, 40, 41, 42, 47, 48, 52, 55, 56, 57, 58, 60, 62, 65, 68, 69, 70, 71, 73, 74, 120];
 
   let index = 0;
   for (let program of usedInstruments) {
@@ -142,16 +146,28 @@ function makeInstrumentList() {
 
   // Also handle the callback when changed
   instrumentInfo.events = {
-    change: e => {
-      setCurrentInstrument(e.target.value);
+    selectOn : {
+      change: e => {
+        instrumentInfo.selectOn = false;
+        setCurrentInstrument(e.target.value);
+      }
+    },
+    selectOff: {
+      click: e => {
+        console.log("clicked");
+        instrumentInfo.selectOn = true;
+        jst.update("instruments");
+      }
     }
   };
   
 }
 
 function setCurrentInstrument(instIndex) {
-  let instrument = instrumentInfo.list[instIndex];
-  currentProgram = instrument.program;
+  let instrument                   = instrumentInfo.list[instIndex];
+  instrumentInfo.currentInstrument = instIndex;
+  currentProgram                   = instrument.program;
+  jst.update("instruments");
 }
 
 
@@ -294,6 +310,7 @@ function addTimedSlider(message) {
     let lastTime = -9999;
     let lastRiders;
     let lastNoteId;
+    let channelProgram = 0;
     message.note_list.forEach(function (noteMessage) {
 
       // Add the slider 1.5 seconds ahead of time
@@ -307,7 +324,6 @@ function addTimedSlider(message) {
       if ((timeoutSeconds - lastTime) < notesTooCloseThreshold && lastRiders) {
         // Notes too close together in time - just add this note
         // as a rider on the last one
-        console.log("Adding rider", noteMessage);
         lastRiders.push({
           message: noteMessage
         });
@@ -315,7 +331,7 @@ function addTimedSlider(message) {
         lastRiders = new Array();
         lastTime = timeoutSeconds;
         lastNoteId = noteMessage.note_id;
-        console.log("Adding note ", noteMessage);
+        channelProgram = noteMessage.program;
         (function (riders) {
           sliderTimeouts.push(setTimeout(function () {
             addSlider(noteMessage.note_id, noteMessage.track,
@@ -324,6 +340,15 @@ function addTimedSlider(message) {
         })(lastRiders);
       }
     });
+    
+    channelProgram = parseInt(channelProgram);
+    for (let instEntry of instrumentInfo.list) {
+      if (instEntry.program == channelProgram) {
+        setCurrentInstrument(instEntry.index);
+        break;
+      }
+    }
+    
   }
 }
 

@@ -104,12 +104,17 @@ export default templates = {
       $div("Current Instrument"),
       $div(
         {cn: "instrument-select"},
-        $select(
-          {events: instrumentInfo.events},
-          instrumentInfo.list.map(entry => $option(
-            {value: entry.index,
-             properties: entry.selected ? ['selected'] : []},
-            entry.name))
+        instrumentInfo.selectOn ? 
+          $select(
+            {events: instrumentInfo.events.selectOn},
+            instrumentInfo.list.map(entry => $option(
+              {value: entry.index,
+               properties: entry.selected ? ['selected'] : []},
+              entry.name))
+          )
+        : $div(
+          {events: instrumentInfo.events.selectOff},
+          instrumentInfo.list[instrumentInfo.currentInstrument].name
         )
       )
     )
