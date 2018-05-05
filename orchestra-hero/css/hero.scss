@@ -291,7 +291,6 @@ html {
 }
 
 body {
-  /*background-color: #93c3d6;*/
   background-image: url("../assets/background2.png");
   z-index: -99;
   justify-content: left;
@@ -376,10 +375,12 @@ div#buttons {
  *****/
 .modal-footer {
   padding: 5px;
+  background: #99BBFF;
 }
 
 .modal-body {
   padding: 5px;
+  background: #99BBFF;
 }
 
 .modal-content {
@@ -394,6 +395,18 @@ div#buttons {
 input.form-control {
   padding-top: 4px;
   padding-bottom: 4px;
+}
+
+.form-group {
+  margin-bottom: 10px;
+}
+
+#musician-name {
+  background: #DDEEFF;
+};
+
+#submitName {
+  color: #DDEEFF;
 }
 
 /****

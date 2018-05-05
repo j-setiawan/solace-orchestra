@@ -71,6 +71,13 @@ export default templates = {
                 { type: "text", cn: "form-control", id: "musician-name" }
               )
             )
+          ),
+          $div(
+            { cn: "modal-footer" },
+            $button(
+              { id: "submitName", type: "button", cn: "btn btn-primary btn-sm" },
+              "Submit"
+            )
           )
         )
       )
