@@ -70,7 +70,8 @@ function setup() {
   makeInstrumentList();
   jst("body").replaceChild(templates.page(score, "", instrumentInfo));
   resetScore();
-
+  score.spontaneousNotes = 0;
+  
   // Remove address bar
   setTimeout(function(){
 		window.scrollTo(0, 1);
@@ -130,6 +131,7 @@ function getName() {
     $('#lines').show();
     $('#buttons').show();
     enableButtons();
+    resetScore();
   }
 }
 
@@ -202,22 +204,27 @@ function startSong(topic, message) {
   }
 
   scoreUpdater = setInterval(function () {
-    let total = score.hits + score.misses;
-    let percent = total ? (100.0 * score.hits / total).toFixed(0) : "";
-    messaging.sendMessage(`orchestra/theatre/${theatreId}/score_update`, {
-      'msg_type': 'score_update',
-      'channel_id': channelId,
-      'name': musicianName,
-      'hits': score.hits,
-      'misses': score.misses,
-      'percent': percent
-    });
+    sendScoreMessage();
   }, 2500);
 
   messaging.sendResponse(message, {});
 
   // Show the countdown
   startCountdown();
+}
+
+function sendScoreMessage() {
+  let total = score.hits + score.misses;
+  let percent = total ? (100.0 * score.hits / total).toFixed(0) : "";
+  messaging.sendMessage(`orchestra/theatre/${theatreId}/score_update`, {
+    'msg_type': 'score_update',
+    'channel_id': channelId,
+    'name': musicianName,
+    'hits': score.hits,
+    'misses': score.misses,
+    'spontaneousNotes': score.spontaneousNotes,
+    'percent': percent
+  });
 }
 
 function stopSong(topic, message) {
@@ -492,6 +499,8 @@ function buttonPress(e, track) {
       ]
     };
 
+    score.spontaneousNotes++;
+    sendScoreMessage();
     publishSpontaneousNoteMessage(spontaneousNote);
   }
 
@@ -499,13 +508,11 @@ function buttonPress(e, track) {
 }
 
 function resetScore() {
-  score = {
-    hits: 0,
-    misses: 0,
-    total: 0,
-    percent: 0,
-    inARow: 0
-  };
+  score.hits    = 0;
+  score.misses  = 0;
+  score.total   = 0;
+  score.percent = 0;
+  score.inARow  = 0;
   updateScore();
 }
 
