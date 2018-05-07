@@ -73,8 +73,8 @@ function setup() {
   makeInstrumentList();
   jst("body").replaceChild(templates.page(score, "", instrumentInfo));
   resetScore();
-
   score.spontaneousNotes = 0;
+
   // Remove address bar
   setTimeout(function(){
 		window.scrollTo(0, 1);
