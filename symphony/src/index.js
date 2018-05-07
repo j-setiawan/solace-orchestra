@@ -131,6 +131,7 @@ function addSlider(id, channel, track) {
 class Symphony {
     constructor() {
         this.id = uuid();
+        this.songPlaying = false;
         this.messaging = new Messaging(
             {
                 callbacks: {
@@ -178,6 +179,7 @@ class Symphony {
 
         this.messaging.subscribe(
             "orchestra/theatre/default",
+            "orchestra/theatre/default/spontaneous_note",
             "orchestra/theatre/default/" + this.messaging.WILDCARD,
             "orchestra/theatre/default/" + this.messaging.WILDCARD + "/play_note",
             "orchestra/theatre/default/score_update"
@@ -205,6 +207,7 @@ class Symphony {
     rxStartSong(topic, message) {
         let channelList = [];
         this.activeChannels = {};
+        this.songPlaying = true;
         for (let key of Object.keys(message.song_channels)) {
             channelList.push(message.song_channels[key]["channel_id"]);
         }
@@ -235,6 +238,7 @@ class Symphony {
         buildTracks([0]);
         hitNotes = {};
         playerNames = {};
+        this.songPlaying = false;
 
         while(timeouts.length > 0) {
             clearTimeout(timeouts.pop());
@@ -255,7 +259,7 @@ class Symphony {
             addTimedSlider(note);
             MIDI.programChange(note.channel, note.program || 0);
             MIDI.setVolume(note.channel, 127);
-	    MIDI.noteOn(note.channel, note.note, 127, 0);
+            MIDI.noteOn(note.channel, note.note, this.songPlaying ? 40 : 127, 0);
 	    MIDI.noteOff(note.channel, note.note, 0 + 0.5);
         }
     }
@@ -277,6 +281,7 @@ class Symphony {
                 timeouts.push(setTimeout(function () {
                     MIDI.programChange(safeNote.channel, (safeNote.program || 0));
                     MIDI.setVolume(safeNote.channel, 127);
+                    //console.log(self.activeChannels[safeNote.channel], hitNotes.hasOwnProperty(note.note_id));
                     MIDI.noteOn(safeNote.channel, safeNote.note, !self.activeChannels[safeNote.channel] || hitNotes.hasOwnProperty(note.note_id) ? safeNote.velocity : safeNote.velocity/self.velocityDerateFactor, 0);
 //                    MIDI.noteOn(safeNote.channel, safeNote.note, hitNotes.hasOwnProperty(note.note_id) ? safeNote.velocity : safeNote.velocity/self.velocityDerateFactor, 0);
                     MIDI.noteOff(safeNote.channel, safeNote.note, safeNote.duration/1000);
