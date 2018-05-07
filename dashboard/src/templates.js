@@ -122,6 +122,7 @@ export default templates = {
                                        {title: "Channel", name: "channel_id"},
                                        {title: "Hits", name: "hits"},
                                        {title: "Misses", name: "misses"},
+                                       {title: "Other", name: "spontaneousNotes"},
                                        {title: "%", name: "percent"},
                                        {title: "RTT", name: "latency", format: formatters.formatLatency},
                                      ],

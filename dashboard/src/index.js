@@ -63,7 +63,9 @@ class Dashboard {
       "orchestra/broadcast",
       "orchestra/p2p/" + this.myId,
       "orchestra/registration",
-      "orchestra/theatre/default" // add for now to get complete song message
+      "orchestra/theatre/default", // add for now to get complete song message
+      "orchestra/theatre/default/score_update"
+
     );
     this.messaging.sendMessage(`orchestra/broadcast`,
                                {msg_type: "reregister"});
@@ -154,12 +156,13 @@ class Dashboard {
     else if (message.component_type === "musician") {
 
       this.musicianMap[message.client_id] = {
-        name:         message.name,
-        client_id:    message.client_id,
-        hits:         message.hits    || 0,
-        misses:       message.misses  || 0,
-        percent:      message.percent || 0,
-        latency:      message.latency || 0
+        name:             message.name,
+        client_id:        message.client_id,
+        hits:             message.hits             || 0,
+        misses:           message.misses           || 0,
+        spontaneousNotes: message.spontaneousNotes || 0,
+        percent:          message.percent          || 0,
+        latency:          message.latency          || 0
       };
 
       componentAdded = this.musicianMap[message.client_id];
@@ -339,9 +342,10 @@ class Dashboard {
   rxScoreUpdate(topic, message) {
     let musician = this.musicianMap[message.client_id];
     if (musician) {
-      musician.hits    = message.hits;
-      musician.misses  = message.misses;
-      musician.percent = message.percent;
+      musician.hits              = message.hits;
+      musician.misses            = message.misses;
+      musician.spontaneousNotes  = message.spontaneousNotes;
+      musician.percent           = message.percent;
       this.sortMusicians();
       jst.update("musician");
     }
@@ -382,12 +386,13 @@ class Dashboard {
 
   addMusician() {
     let msg = {
-      msg_type:       "register",
-      component_type: "musician",
-      name:           `my-musician-${this.testSeqNum++}`,
-      hits:           0,
-      misses:         0,
-      percent:        0
+      msg_type:        "register",
+      component_type:  "musician",
+      name:            `my-musician-${this.testSeqNum++}`,
+      hits:            0,
+      misses:          0,
+      percent:         0,
+      spontaneousNotes:0
     };
     this.messaging.sendMessage("orchestra/registration", msg);
   }
@@ -430,10 +435,12 @@ class Dashboard {
     if (musician.disabled) {
       musician.state    = "idle";
       musician.disabled = false;
+      this.messaging.sendMessage(`orchestra/p2p/${musician.client_id}`, {msg_type: 'enable'});
     }
     else {
       musician.state    = "disabled";
       musician.disabled = true;
+      this.messaging.sendMessage(`orchestra/p2p/${musician.client_id}`, {msg_type: 'disable'});
     }
     jst.update("musician");
   }
@@ -447,6 +454,8 @@ class Dashboard {
     }
     for (let musician of this.musicians) {
       musician.disabled = !this.allMusicianToggle;
+      this.messaging.sendMessage(`orchestra/p2p/${musician.client_id}`,
+                                 {msg_type: musician.disabled ? 'disable' : 'enable'});
     }
     jst.update("musician");
   }
@@ -454,12 +463,10 @@ class Dashboard {
   stopCurrentSong() {
     this.sendStopSongMessage();
     this.unselectPlayingSong();
-    this.messaging.unsubscribe(`orchestra/theatre/default/score_update`);
   }
 
   startSong(song) {
     this.selectPlayingSong(song);
-    this.messaging.subscribe(`orchestra/theatre/default/score_update`);
     this.sendStartSongMessage(song);
   }
 

@@ -109,9 +109,9 @@ class Conductor:
         song_id = 0
         all_instruments = []
         for file in self.midi_files:
+            print("Parsing midi file: ", file)
             midi = mido.MidiFile(self.midi_file_path + "/" + file)
             name = re.sub('\.mid$', '', file)
-            print("Parsing midi file: ", file)
             info = {
                 'song_name':     name,
                 'song_channels': [],
