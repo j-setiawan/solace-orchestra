@@ -435,10 +435,12 @@ class Dashboard {
     if (musician.disabled) {
       musician.state    = "idle";
       musician.disabled = false;
+      this.messaging.sendMessage(`orchestra/p2p/${musician.client_id}`, {msg_type: 'enable'});
     }
     else {
       musician.state    = "disabled";
       musician.disabled = true;
+      this.messaging.sendMessage(`orchestra/p2p/${musician.client_id}`, {msg_type: 'disable'});
     }
     jst.update("musician");
   }
@@ -452,6 +454,8 @@ class Dashboard {
     }
     for (let musician of this.musicians) {
       musician.disabled = !this.allMusicianToggle;
+      this.messaging.sendMessage(`orchestra/p2p/${musician.client_id}`,
+                                 {msg_type: musician.disabled ? 'disable' : 'enable'});
     }
     jst.update("musician");
   }

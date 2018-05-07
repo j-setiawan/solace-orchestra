@@ -35,6 +35,9 @@ var currentProgram = 0;
 var sliderTimeSecs = 1.5;
 var publisher = {};
 
+// Master switch on spontaneous notes
+var amEnabled = true;
+
 var sliderTimeouts = [];
 
 jst.makeGlobal();
@@ -97,6 +100,8 @@ function mainLoop() {
         note_list: (...args) => receiveMusicScore(...args),
         start_song: (...args) => startSong(...args),
         stop_song: (...args) => stopSong(...args),
+        enable: (...args) => enableMusician(...args),
+        disable: (...args) => disableMusician(...args),
         register_response: (...args) => registerResponse(...args),
         reregister: (...args) => reregister(...args),
       }
@@ -250,6 +255,16 @@ function stopSong(topic, message) {
   // Reset to original channel
   channelId = "0";
   
+}
+
+function enableMusician() {
+  console.log("Enabled");
+  amEnabled = true;
+}
+
+function disableMusician() {
+  console.log("Disabled");
+  amEnabled = false;
 }
 
 function enableButtons() {
@@ -478,6 +493,10 @@ function buttonPress(e, track) {
 
   } else {
 
+    if (!amEnabled) {
+      return;
+    }
+    
     // There is no note attached to the button press
     // This is a spontaneous note
     console.log("Spontaneous note");
