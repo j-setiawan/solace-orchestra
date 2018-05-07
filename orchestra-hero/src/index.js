@@ -104,9 +104,10 @@ function mainLoop() {
         disable: (...args) => disableMusician(...args),
         register_response: (...args) => registerResponse(...args),
         reregister: (...args) => reregister(...args),
+        complete_song: (...args) => console.log("Ignoring complete_song"),
+        player_start: (...args) => console.log("Ignoring player_start message")
       }
     }
-
   );
 
   myId = messaging.myId;
