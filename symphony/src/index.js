@@ -259,7 +259,7 @@ class Symphony {
             addTimedSlider(note);
             MIDI.programChange(note.channel, note.program || 0);
             MIDI.setVolume(note.channel, 127);
-            MIDI.noteOn(note.channel, note.note, this.songPlaying ? 40 : 127, 0);
+            MIDI.noteOn(note.channel, note.note, this.songPlaying ? 15 : 127, 0);
 	    MIDI.noteOff(note.channel, note.note, 0 + 0.5);
         }
     }
