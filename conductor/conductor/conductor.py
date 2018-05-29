@@ -302,7 +302,7 @@ class Conductor:
 
         # Need to sleep a bit so that the other components can register their
         # subscriptions
-        time.sleep(2)
+        time.sleep(3)
         song = self.song_list_full[songId]
 
         currentTime = self.solace.getTime()
@@ -311,7 +311,7 @@ class Conductor:
             for note in channel['notes']:
                 fixedNote = copy.copy(note)
                 if ('play_time' in fixedNote):
-                    fixedNote['play_time'] = fixedNote['play_time'] + currentTime + 5000
+                    fixedNote['play_time'] = fixedNote['play_time'] + currentTime + 6000
                     notes.append(fixedNote)
             
             message_body = {
@@ -322,7 +322,7 @@ class Conductor:
             print("Sending note list on ", channel['notes'][0]['channel'], topic)
             self.solace.sendMessage(topic, message_body)
 
-        stopTime = 8000 + self.solace.getTime() + self.song_list[songId]['song_length']*1000
+        stopTime = 9000 + self.solace.getTime() + self.song_list[songId]['song_length']*1000
 
         while (self.solace.getTime() < stopTime) and self.song_list[songId]['is_playing']:
             time.sleep(1)

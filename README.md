@@ -13,6 +13,9 @@ There are four components that you need to run:
 
 ### Startup for symphony, dashboard and musician
 
+First you need to fill in the URLs and credentials for a messaging broker in `common/env.js`. The javascript apps use 
+the SMF port.
+
 All three of these components are javascript single-page apps for the browswer. To get them to work, you need to go into each directory and run:
 
 1. `npm install`
